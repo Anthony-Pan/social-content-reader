@@ -99,7 +99,7 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
 
 ## Commit
 
-_Filled after `git commit`:_
+**Filled.**
 
-- SHA: _(see git log)_
-- Files: README, LICENSE, STATUS, skills/social-content-reader/** 
+- SHA: `4757bb0e5580e5f69f355d12b0370a44531f6160` (short `4757bb0`) on branch `main`
+- Files: 13 tracked files (README, LICENSE, STATUS, skill package) 
