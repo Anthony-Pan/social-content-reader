@@ -18,7 +18,7 @@
 
 ## Partial / not done
 
-- [ ] Copy/sync tree onto Windows suggested path (ready; may need Anthony/Dev to finish if CopyFromBox not run)
+- [x] Synced to Windows: `C:\Users\aw\source\repos\social-content-reader` (tar extract + local git `16f30c5`; Codex 0.163.0 verified)
 - [ ] Create **public** GitHub repo under `Anthony-Pan` + push (gh on box is auth’d as Anthony-Pan — **waiting Anthony publish yes/name**)
 - [ ] End-to-end live fetch tests per platform (overnight scaffold only; Instagram/视频号 expected weak/blocked)
 - [ ] Optional paid transcript API wiring (env-based) — intentionally not hardcoded
@@ -88,18 +88,19 @@ New-Item -ItemType Directory -Force "$env:USERPROFILE\.agents\skills" | Out-Null
 ## Morning-brief blurb (paste-ready)
 
 ```text
-📌 social-content-reader (overnight) — public Agent Skill draft ready on box
+📌 social-content-reader (overnight) — public Agent Skill draft ready (Windows+Codex-first)
 • Goal: agents understand social videos/posts (transcripts/bodies), not just captions
-• Format: Agent Skills SKILL.md + platform docs; MIT; Windows+Codex-first
-• Probed Anthony-Alien: Codex 0.163.0 on PATH; suggested path C:\Users\aw\source\repos\social-content-reader
+• Format: Agent Skills SKILL.md + platform docs; MIT; designed for Anthony-Alien + Codex CLI
+• Live on PC: C:\Users\aw\source\repos\social-content-reader (Codex 0.163.0 OK; git 16f30c5)
+• Also on box: /workspace/social-content-reader (git main 34cf4de)
 • Matrix: YouTube✅ · X partial✅ · Instagram deep-read⚠️/blocked · 公众号 partial⚠️ · 视频号❌
 • GitHub public push: waiting your yes + final repo name (gh auth OK as Anthony-Pan)
-• Path on box: /workspace/social-content-reader — ask Dev to sync→Windows + publish when you decide
 ```
 
 ## Commit
 
 **Filled.**
 
-- SHA: `4757bb0e5580e5f69f355d12b0370a44531f6160` (short `4757bb0`) on branch `main`
+- Box SHA: `34cf4de` (initial content `4757bb0`) on `main`
+- Windows SHA: `16f30c5` at `C:\\Users\\aw\\source\\repos\\social-content-reader`
 - Files: 13 tracked files (README, LICENSE, STATUS, skill package) 
