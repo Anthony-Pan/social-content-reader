@@ -1,7 +1,7 @@
 # STATUS — social-content-reader
 
-**Version:** 0.3.1  
-**Updated:** 2026-10-26 ~16:10 Asia/Shanghai
+**Version:** 0.3.2  
+**Updated:** 2026-10-26 ~17:10 Asia/Shanghai
 
 ## Locations
 
@@ -13,11 +13,17 @@
 - User skill (Windows): `%USERPROFILE%\.agents\skills\social-content-reader` (+ `.cursor\skills\…`)
 - User skill (box): `/home/box/.agents/skills/social-content-reader` (+ managed-skills copy)
 
+## v0.3.2
+
+- 视频号 default path: WebFetch `weixin.qq.com/sph/<id>` → `body_text` = caption, `body_kind: caption`, `fetch_method: webfetch` → Understanding. No file ask.
+- Example `AAZ3p39sQm`: caption themes are Codex token waste and brainstorming in ChatGPT first (measured WebFetch, 2026-10-26). Bare curl of that URL is a JS shell; the recipe stays on WebFetch.
+- The same caption → understand default applies to Instagram, TikTok, Douyin, Threads, X, and Facebook when public caption/post text exists. ASR is optional (spoken-verbatim, or empty caption).
+- 小红书 and LinkedIn are deferred (docs unchanged aside from a matrix “deferred” mark).
+- `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`). No unofficial downloaders, CDN decrypt, or third-party parser APIs.
+
 ## v0.3.1
 
 - `weixin.qq.com/sph/<id>` (and `www`) normalizes to `wechat-channels`, `link_form: sph_share`, canonical `https://weixin.qq.com/sph/<id>`.
-- Sph share WebFetch returns caption/description (measured: `AAZ3p39sQm`), not spoken video. Speech still needs user media + `asr_local.py`.
-- `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`).
 - Mac/Linux Codex skill install documented next to Windows. Windows 24/7 remains fine for heavy jobs.
 
 ## Matrix (honest)
@@ -33,5 +39,5 @@ See README / SKILL — 16 platforms. Overseas majors are first-class alongside C
 
 ## Next
 
-- Real speech E2E on a user Reel/视频号/TikTok file when Anthony supplies one
+- Spoken-verbatim ASR on a user file only when someone asks for speech or a caption is empty
 - Optional API keys for Graph / Helix / YouTube Data as needed

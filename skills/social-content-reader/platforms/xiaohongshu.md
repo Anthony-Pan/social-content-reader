@@ -1,6 +1,6 @@
 # 小红书 / RedNote (Xiaohongshu)
 
-**Status:** Partial — note text sometimes via share link / user paste; media speech via user media + ASR. Remote deep-read frequently login-walled.
+**Status:** Deferred this release. Partial — note text sometimes via share link / user paste; media speech via user media + ASR. Remote deep-read frequently login-walled. The v0.3.2 caption→understand default was not applied here.
 
 ## URL patterns
 

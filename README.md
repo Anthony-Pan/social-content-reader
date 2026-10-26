@@ -1,8 +1,8 @@
 # social-content-reader
 
-**Public Agent Skill** that teaches AI agents how to **read and understand** social media content — transcripts, article/post bodies, OCR’d captions — not just titles and descriptions.
+**Public Agent Skill** that teaches AI agents how to **read and understand** social media content from public text: transcripts, article/post bodies, and share captions.
 
-Version **0.3.1** treats WeChat 视频号 `weixin.qq.com/sph/<id>` share links as first-class (caption/description via WebFetch; spoken video still needs user media + ASR) and documents Mac/Linux Codex skill install beside Windows. **0.3.0** expanded coverage across major **overseas** and **Chinese** platforms.
+Version **0.3.2** treats a public caption as enough to understand the post. WeChat 视频号 `weixin.qq.com/sph/<id>` is WebFetch caption → Understanding, with no file handoff on that path. The same default applies where Instagram, TikTok, Douyin, Threads, X, and Facebook expose a public caption or post text. Spoken ASR is optional. **0.3.1** added sph link detection and Mac/Linux install docs, which stay in place.
 
 Most social sites block or frustrate agents. This skill gives a reusable recipe: detect the platform → prefer an existing connector → fall back to a documented public path → normalize → summarize what the content is *about*.
 
@@ -62,13 +62,13 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | Platform | Status | What agents can actually understand | Notes |
 | --- | --- | --- | --- |
 | **YouTube** | ✅ Works | Full transcript (+ metadata) | Prefer host YouTube / TubeAlfred-style transcript tools. Description alone is **not** enough. |
-| **X / Twitter** | ✅ Partial | Public post text | Host X connector → `publish.x.com/oembed`. Threads/media limited. |
-| **Instagram** | Works with user media + ASR | Reel speech from user file/paste | oEmbed is embed/preview only. |
-| **TikTok** | Partial | Caption via oEmbed; speech via ASR | Prefer user media + ASR for dialogue. |
-| **Threads** | Partial | Public post text when available | Login walls → ask for paste. |
+| **X / Twitter** | ✅ Works | Public post text | Host X connector → `publish.x.com/oembed`, then understand. Threads/media bytes stay limited. |
+| **Instagram** | ✅ Works when a caption exists | Caption or post text | Tokenless oEmbed is often embed chrome with no caption. ASR only for spoken-verbatim or an empty caption. |
+| **TikTok** | ✅ Works | Caption via oEmbed | Understand from the caption. ASR is optional. |
+| **Threads** | ✅ Works when post text exists | Public post text | oEmbed / public page → understand. Login walls stay unavailable. |
 | **Reddit** | ✅ Works | OP selftext (+ optional comments) | Public `.json` append or host connector. |
-| **LinkedIn** | Partial | Post/article when authorized or pasted | Often login-walled — paste is honest default. |
-| **Facebook** | Partial | Public Page posts via Graph/oEmbed/paste | Personal posts usually unavailable. |
+| **LinkedIn** | Partial (deferred) | Post/article when authorized or pasted | Often login-walled — paste is honest default. Unchanged this release. |
+| **Facebook** | ✅ Works when public text exists | Page post or Reel caption via Graph/oEmbed | Personal posts usually unavailable. ASR optional for spoken Reels. |
 | **Telegram** | Partial | Public channel posts via `t.me/s/` | Private chats need bot membership or export. |
 | **Vimeo** | ✅ Works | Captions/text tracks when present | oEmbed description ≠ transcript. |
 | **Twitch** | Partial | VOD/clip speech via ASR | Helix for metadata; chunk long VODs. |
@@ -78,16 +78,18 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | Platform | Status | What agents can actually understand | Notes |
 | --- | --- | --- | --- |
 | **Bilibili** | ✅ Works | Uploader CC / subtitles often | View API + player subtitles; else ASR. |
-| **Douyin 抖音** | Partial | Speech via user media + ASR | Remote deep-read often blocked. |
-| **小红书 / RedNote** | Partial | Note text via paste (best) | App/login walls common. |
+| **Douyin 抖音** | ✅ Works when a share caption exists | Share-page caption | WebFetch caption → understand. Empty/verification pages stay blocked. ASR optional. |
+| **小红书 / RedNote** | Partial (deferred) | Note text via paste (best) | App/login walls common. Unchanged this release. |
 | **WeChat 公众号** | Partial | Article body on short `/s/<id>` links | Verification → user paste. |
-| **WeChat 视频号** | Partial | Caption/description on `weixin.qq.com/sph/<id>` via WebFetch; speech from a user file + ASR | Caption is not speech. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`). |
+| **WeChat 视频号** | ✅ Works | What the video is about, from the sph share caption | WebFetch `weixin.qq.com/sph/<id>` → caption → Understanding. Example: `AAZ3p39sQm` (Codex token waste; brainstorm in ChatGPT first). ASR optional. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`). |
 
 See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
 
 ## ASR pipeline
 
-Short-form video speech (IG / TikTok / Douyin / 视频号 / …) **is readable when the user supplies a media file**:
+User-media ASR is for **spoken-verbatim** requests and for **empty captions**. It is not required before summarizing a caption or post you already fetched.
+
+When it does apply, short-form speech (IG / TikTok / Douyin / 视频号 / …) is readable from a user-supplied media file:
 
 ```bash
 # Mac / Linux — Python 3.11 or 3.12 preferred (faster-whisper av wheels); brew install ffmpeg

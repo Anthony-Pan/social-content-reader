@@ -334,7 +334,9 @@ def detect(url: str) -> dict:
         return {
             "platform": "wechat-channels",
             "canonical_url": raw if "://" in raw else "https://" + raw,
-            "limits": ["no general public consumer fetch; use user media + ASR"],
+            "limits": [
+                "no general public consumer fetch on this host; use an sph share link for caption understanding",
+            ],
         }
     if "tiktok.com" in host:
         return {
@@ -404,7 +406,7 @@ def _wechat_sph(url: str) -> dict | None:
         "canonical_url": f"https://weixin.qq.com/sph/{sph_id}",
         "link_form": "sph_share",
         "limits": [
-            "sph share page text is caption/description, not the spoken video",
+            "sph share caption is enough to understand the post; spoken transcript is optional",
         ],
     }
 
