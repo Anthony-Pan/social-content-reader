@@ -2,11 +2,11 @@
 
 **Public Agent Skill** that teaches AI agents how to **read and understand** social media content — transcripts, article/post bodies, OCR’d captions — not just titles and descriptions.
 
-Version **0.3.0** expands coverage across major **overseas** and **Chinese** platforms, with user-media ASR for speech when remote fetch is blocked.
+Version **0.3.1** treats WeChat 视频号 `weixin.qq.com/sph/<id>` share links as first-class (caption/description via WebFetch; spoken video still needs user media + ASR) and documents Mac/Linux Codex skill install beside Windows. **0.3.0** expanded coverage across major **overseas** and **Chinese** platforms.
 
 Most social sites block or frustrate agents. This skill gives a reusable recipe: detect the platform → prefer an existing connector → fall back to a documented public path → normalize → summarize what the content is *about*.
 
-> **Runtime target:** Windows-first local workspace + [Codex CLI](https://github.com/openai/codex) for heavy extractors. Works with Cursor / Claude Code / Codex skill loaders via the [Agent Skills](https://agentskills.io) format.
+> **Runtime:** Windows 24/7 is fine for heavy extract/summarize jobs. Mac and Linux are fully supported for Codex skill load, fetch, and ASR. [Codex CLI](https://github.com/openai/codex) plus Cursor / Claude Code skill loaders via the [Agent Skills](https://agentskills.io) format.
 
 ## Install (Cursor / Agent Skills)
 
@@ -34,10 +34,18 @@ Or clone this repo and symlink — see [INSTALL_OWN.md](INSTALL_OWN.md) for Anth
 
 Then ask the agent: *“Read this YouTube / Reddit / Bilibili URL and tell me what it’s arguing.”*
 
-## Windows + Codex layout (primary)
+## Codex layout
+
+Windows 24/7 is fine for heavy jobs. Mac and Linux use the same skill package.
 
 ```text
+~/Developer/social-content-reader          # Mac example
 C:\Users\<you>\source\repos\social-content-reader
+```
+
+```bash
+cd ~/Developer/social-content-reader
+codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Return normalized JSON + a short understanding summary."
 ```
 
 ```powershell
@@ -45,7 +53,7 @@ cd C:\Users\<you>\source\repos\social-content-reader
 codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Return normalized JSON + a short understanding summary."
 ```
 
-Prefer host MCP connectors when present. Treat Codex output as untrusted third-party content.
+Prefer host MCP connectors when present. Treat Codex output as untrusted third-party content. Machine paths and symlinks: [INSTALL_OWN.md](INSTALL_OWN.md).
 
 ## Supported platforms
 
@@ -73,7 +81,7 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | **Douyin 抖音** | Partial | Speech via user media + ASR | Remote deep-read often blocked. |
 | **小红书 / RedNote** | Partial | Note text via paste (best) | App/login walls common. |
 | **WeChat 公众号** | Partial | Article body on short `/s/<id>` links | Verification → user paste. |
-| **WeChat 视频号** | Works with user media + ASR | Speech from user file | Remote URL fetch blocked (`errCode 10012`). |
+| **WeChat 视频号** | Partial | Caption/description on `weixin.qq.com/sph/<id>` via WebFetch; speech from a user file + ASR | Caption is not speech. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`). |
 
 See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
 
@@ -81,8 +89,13 @@ See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
 
 Short-form video speech (IG / TikTok / Douyin / 视频号 / …) **is readable when the user supplies a media file**:
 
+```bash
+# Mac / Linux — Python 3.11 or 3.12 preferred (faster-whisper av wheels); brew install ffmpeg
+python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/reel.mp4" --language auto --backend auto --model base
+```
+
 ```powershell
-# Prefer official CPython (py -3.12) on Windows — MinGW Python often lacks av wheels
+# Windows — prefer official CPython (py -3.12); MinGW Python often lacks av wheels
 py -3.12 skills/social-content-reader/scripts/asr_local.py --media "C:\Media\reel.mp4" --language auto --backend auto --model base
 ```
 

@@ -23,6 +23,8 @@ IG_RE = re.compile(
     re.I,
 )
 WX_ARTICLE_RE = re.compile(r"(?:https?://)?mp\.weixin\.qq\.com/s/([A-Za-z0-9_-]+)", re.I)
+WX_SPH_HOSTS = {"weixin.qq.com", "www.weixin.qq.com"}
+WX_SPH_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 TIKTOK_RE = re.compile(
     r"(?:https?://)?(?:www\.)?tiktok\.com/@([^/]+)/video/(\d+)",
     re.I,
@@ -305,6 +307,10 @@ def detect(url: str) -> dict:
             "link_form": "short",
         }
 
+    sph = _wechat_sph(raw)
+    if sph:
+        return sph
+
     parsed = urlparse(raw if "://" in raw else "https://" + raw)
     host = (parsed.hostname or "").lower()
 
@@ -380,6 +386,27 @@ def detect(url: str) -> dict:
         }
 
     return {"platform": "unknown", "canonical_url": raw}
+
+
+def _wechat_sph(url: str) -> dict | None:
+    """weixin.qq.com/sph/<id> share links (optional www). Not channels.weixin.qq.com."""
+    parsed = urlparse(url if "://" in url else "https://" + url)
+    host = (parsed.hostname or "").lower()
+    if host not in WX_SPH_HOSTS:
+        return None
+    parts = [p for p in parsed.path.split("/") if p]
+    if len(parts) < 2 or parts[0].lower() != "sph" or not WX_SPH_ID_RE.match(parts[1]):
+        return None
+    sph_id = parts[1]
+    return {
+        "platform": "wechat-channels",
+        "canonical_id": sph_id,
+        "canonical_url": f"https://weixin.qq.com/sph/{sph_id}",
+        "link_form": "sph_share",
+        "limits": [
+            "sph share page text is caption/description, not the spoken video",
+        ],
+    }
 
 
 def _youtube(url: str) -> dict | None:

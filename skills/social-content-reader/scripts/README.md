@@ -9,9 +9,15 @@ Small URL/ASR helpers; no platform downloader, login automation, or private API 
 
 Run:
 
+```bash
+python3 skills/social-content-reader/scripts/normalize_url.py "https://weixin.qq.com/sph/AAZ3p39sQm"
+```
+
 ```powershell
 python skills\social-content-reader\scripts\normalize_url.py "https://youtu.be/dQw4w9WgXcQ"
 ```
+
+`weixin.qq.com/sph/<id>` (optional `www`) returns `platform: wechat-channels`, `link_form: sph_share`, and `canonical_url: https://weixin.qq.com/sph/<id>`. `channels.weixin.qq.com` stays `wechat-channels` without an sph id.
 
 Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder.
 
@@ -40,6 +46,17 @@ Example result (illustrative, not a recorded transcription):
 Check exit code 0 and `ok: true`, then map `text` → `body_text`, `body_kind: transcript`, `fetch_method: user_media_asr`. Record language/backend/model and speech-only limitations. ASR does not extract silent visuals or guarantee exact names/numbers. Empty transcription fails instead of pretending the caption is speech.
 
 Operational failures return the same keys, `ok: false`, an `error`, and exit code 1. Missing files, empty files, missing dependencies/ffmpeg, unsupported API formats, oversized API uploads and backend errors are actionable failures. Help uses normal CLI text/exit 0; invalid arguments use argparse diagnostics/exit 2. Diagnostics/progress go to stderr; operational stdout is one ASCII-safe JSON object (Unicode text round-trips through JSON decoding on Windows).
+
+## Mac / Linux installation
+
+Python 3.11 or 3.12 is preferred so `faster-whisper` can install `av` wheels. On macOS, `brew install ffmpeg`. On Linux, install distro `ffmpeg`. Then:
+
+```bash
+python3 -m pip install faster-whisper "av>=11,<14"
+python3 skills/social-content-reader/scripts/asr_local.py --help
+```
+
+Windows 24/7 is fine for heavy jobs. Mac and Linux fully support skill load, fetch, and this ASR helper. See [INSTALL_OWN.md](../../../INSTALL_OWN.md).
 
 ## Windows installation
 

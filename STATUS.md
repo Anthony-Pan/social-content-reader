@@ -1,15 +1,24 @@
 # STATUS — social-content-reader
 
-**Version:** 0.3.0  
-**Updated:** 2026-10-26 ~15:35 Asia/Shanghai
+**Version:** 0.3.1  
+**Updated:** 2026-10-26 ~16:10 Asia/Shanghai
 
 ## Locations
 
 - GitHub: https://github.com/Anthony-Pan/social-content-reader (public)
 - Box clone: `/workspace/social-content-reader`
+- Mac clone: `~/Developer/social-content-reader`
 - Windows clone: `C:\Users\aw\source\repos\social-content-reader`
+- User skill (Mac/Linux): `~/.agents/skills/social-content-reader` and `~/.cursor/skills/social-content-reader` → skill package
 - User skill (Windows): `%USERPROFILE%\.agents\skills\social-content-reader` (+ `.cursor\skills\…`)
 - User skill (box): `/home/box/.agents/skills/social-content-reader` (+ managed-skills copy)
+
+## v0.3.1
+
+- `weixin.qq.com/sph/<id>` (and `www`) normalizes to `wechat-channels`, `link_form: sph_share`, canonical `https://weixin.qq.com/sph/<id>`.
+- Sph share WebFetch returns caption/description (measured: `AAZ3p39sQm`), not spoken video. Speech still needs user media + `asr_local.py`.
+- `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`).
+- Mac/Linux Codex skill install documented next to Windows. Windows 24/7 remains fine for heavy jobs.
 
 ## Matrix (honest)
 

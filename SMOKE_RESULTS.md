@@ -13,7 +13,7 @@
 | X / Twitter | ✅ partial | host `x` MCP `get_posts_by_id` + `publish.twitter.com/oembed` | Post `2112722684710719913` (@X) text+metrics; oEmbed HTML OK; thread/media still limited |
 | Instagram | ⚠️ partial / deep-read blocked | Meta `graph.facebook.com/v26.0/instagram_oembed` | Real post `fA9uwTtkSN` → embed HTML only (`html`,`provider_*`,`type`,`width`); **no** caption/transcript fields; speech understanding blocked |
 | WeChat 公众号 | ⚠️ partial | WebFetch vs raw curl | Short URL `…/s/Rsa54LdbyhXIHheJYO6gkw` → full article body via WebFetch; raw datacenter `curl` often `未知错误`/redirect — captcha/UA walls real |
-| WeChat 视频号 | ❌ fail (blocked) | `channels.weixin.qq.com` HTTP | Homepage shell only; feed path returns `{"errCode":10012,"errMsg":"Illegal request"}` — no consumer transcript API |
+| WeChat 视频号 | ⚠️ partial | sph WebFetch caption; `channels.weixin.qq.com` feed blocked | Feed path `errCode 10012` (no transcript). Sph share `…/sph/AAZ3p39sQm` WebFetch returns caption/date/thumbnail, not speech — addendum §7 |
 
 ## Detail
 
@@ -28,6 +28,8 @@ Command: `python3 skills/social-content-reader/scripts/normalize_url.py <url>`
 | `https://www.instagram.com/reel/C123abcDEF/` | instagram | kind=`reel`, id=`C123abcDEF` |
 | `https://mp.weixin.qq.com/s/AbCdEfGhIjKlMnOp` | wechat-article | short form |
 | `https://channels.weixin.qq.com/web/pages/live?finderUsername=test` | wechat-channels | limits: no general public consumer fetch |
+| `https://weixin.qq.com/sph/AAZ3p39sQm` | wechat-channels | `canonical_id` `AAZ3p39sQm`, `link_form` `sph_share`, canonical `https://weixin.qq.com/sph/AAZ3p39sQm` (v0.3.1; see addendum) |
+| `https://www.weixin.qq.com/sph/AAZ3p39sQm` | wechat-channels | same canonical id/url; `www` stripped |
 | bare `dQw4w9WgXcQ` | youtube | OK |
 
 **Result:** pass
@@ -72,7 +74,23 @@ Command: `python3 skills/social-content-reader/scripts/normalize_url.py <url>`
 
 - `https://channels.weixin.qq.com/` → HTML shell (~4.6KB), not a video transcript
 - `https://channels.weixin.qq.com/web/pages/feed` → `{"desc":"非法请求","errMsg":"Illegal request","errCode":10012}`
-- **Result:** fail / blocked — matches `platforms/wechat-channels.md`; honest path = user paste or creator-owned APIs
+- **Result:** fail / blocked for `channels.weixin.qq.com` feed deep-read — still true. Sph share links are a separate path; see the addendum.
+
+### 7. Addendum (2026-10-26, v0.3.1) — 视频号 sph share links
+
+Normalize (local, no network):
+
+```bash
+python3 skills/social-content-reader/scripts/normalize_url.py 'https://weixin.qq.com/sph/AAZ3p39sQm'
+```
+
+Expected: `platform` `wechat-channels`, `canonical_id` `AAZ3p39sQm`, `canonical_url` `https://weixin.qq.com/sph/AAZ3p39sQm`, `link_form` `sph_share`. `www.weixin.qq.com` normalizes to the same canonical URL. `channels.weixin.qq.com` stays `wechat-channels` and does not pick up `sph_share`. Covered by `scripts/tests/test_normalize_url.py`.
+
+WebFetch (measured, do not treat as speech): `https://weixin.qq.com/sph/AAZ3p39sQm` returns caption/description text (about Codex token waste / ChatGPT brainstorm then Codex exec), date `2026年9月2日`, and a thumbnail. It does **not** return the spoken video body. Raw curl of the same URL often returns the SPA shell only. Recipe: WebFetch → `body_kind: caption`, `fetch_method: webfetch`. Spoken understanding still requires user media + `asr_local.py`.
+
+`channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`) for remote deep-read. No login bypass.
+
+- **Result:** normalize pass for sph share links; caption WebFetch partial; speech still user-media ASR
 
 ## Honesty notes
 

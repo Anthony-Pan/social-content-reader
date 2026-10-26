@@ -53,7 +53,8 @@ URL
 | `douyin.com/video/*`, `v.douyin.com/*` | `douyin` |
 | `xiaohongshu.com/explore/*`, `xhslink.com/*` | `xiaohongshu` |
 | `mp.weixin.qq.com/s` | `wechat-article` |
-| `channels.weixin.qq.com`, 视频号 share links | `wechat-channels` |
+| `weixin.qq.com/sph/<id>`, `www.weixin.qq.com/sph/<id>` (`link_form: sph_share`) | `wechat-channels` |
+| `channels.weixin.qq.com`, other 视频号 cards | `wechat-channels` |
 | Unknown | `unknown` → ask user or try generic web read with honesty |
 
 Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
@@ -70,9 +71,9 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
   "published_at": "2026-...",
   "language": "en",
   "body_text": "full transcript or article body",
-  "body_kind": "transcript|article|post_text|caption_only|unavailable",
+  "body_kind": "transcript|article|post_text|caption|caption_only|unavailable",
   "media_notes": "has video; transcript from captions",
-  "fetch_method": "host_connector|oembed|public_api|public_webfetch|public_curl|user_paste|user_export|user_media_asr|blocked",
+  "fetch_method": "host_connector|oembed|public_api|webfetch|public_webfetch|public_curl|user_paste|user_export|user_media_asr|blocked",
   "confidence": "high|medium|low",
   "limits": ["..."]
 }
@@ -89,10 +90,12 @@ For user-supplied files, run the [ASR pipeline](SKILL.md#asr-pipeline) directly;
 5. **User media + ASR** for speech when remote transcript is unavailable.
 6. **Blocked**: stop. Do not invent scrapers that fight ToS or auth walls.
 
-## Windows + Codex placement
+`caption` and `caption_only` both mean caption/description text, not speech. `webfetch` and `public_webfetch` both mean a host page-text fetch (WebFetch or equivalent).
+
+## Runtimes
 
 - Skill docs live in-repo under `skills/social-content-reader/`.
-- Long fetch + summarize jobs: `codex exec` from the Windows clone.
+- Windows 24/7 is fine for heavy `codex exec` jobs. Mac and Linux fully support Codex skill load, fetch, and local ASR. See [INSTALL_OWN.md](../../INSTALL_OWN.md).
 - Keep secrets out of git; pass API keys via environment only when using official APIs.
 
 ## Extensibility
