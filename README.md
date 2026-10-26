@@ -2,7 +2,11 @@
 
 **Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.4.0** makes the media file the default success path. Agents extract frames (`extract_frames.py`), OCR burned-in text when Tesseract or macOS Vision is available (`ocr_frames.py`), describe frames with the host vision/video tool, and transcribe speech with `asr_local.py` or an official transcript track. If the file cannot be acquired, the agent says the video was not watched. **0.3.1** still documents WeChat 视频号 `weixin.qq.com/sph/<id>` caption metadata. **0.3.0** expanded coverage across major **overseas** and **Chinese** platforms.
+Version **0.5.0** adds automatic acquisition through public players and validated
+local files. TikTok's official embed and Bilibili's external player now save
+media on this Mac. LinkedIn, 小红书, Telegram and Twitch are listed again, with
+their actual success or remaining wall. User export is last resort after the
+documented automatic path fails. Captions remain metadata (the v0.4 rule).
 
 Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
@@ -57,31 +61,30 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 
 ## Supported platforms
 
-### Overseas / global
+All 16 platforms are available as documented recipes. “Verified” below means
+a sample media file was saved and validated on this Mac, not universal access
+or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](SMOKE_RESULTS.md).
 
-| Platform | Status | What counts as reading it | Notes |
-| --- | --- | --- | --- |
-| **YouTube** | Works with transcript + frames | Speech from official captions or ASR; graphics from frames | Description is metadata. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file. That file is not Understanding by itself. |
-| **X / Twitter** | Post text works; video needs a file | Public post text. Attached video → media pipeline | Host X connector → `publish.x.com/oembed` for the post only. |
-| **Instagram** | Media required for a Reel | Frames + OCR + vision + ASR on a local file | oEmbed is an embed preview, not the Reel. |
-| **TikTok** | Media required | A local file, then the media pipeline | oEmbed caption is metadata. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. That is not a verified file recipe. |
-| **Threads** | Post text when public; video needs a file | Public post text. Video → media pipeline | Login walls → ask for paste or a file. |
-| **Reddit** | Public text works; video needs a file | OP selftext. `v.redd.it` → media pipeline | Public `.json` append or host connector. |
-| **Facebook** | Page post when authorized; Reel needs a file | Graph/paste for the post. Reel → media pipeline | Personal posts usually unavailable. |
-| **Vimeo** | Works when text tracks or a file are read | Text tracks = speech. Frames = graphics | oEmbed description is metadata. |
+| Platform | Automatic acquire method | Mac result / remaining wall |
+| --- | --- | --- |
+| YouTube | yt-dlp public player | Yes; audio + video |
+| X / Twitter | yt-dlp public syndication | Yes; audio + video |
+| Instagram | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
+| TikTok | Documented /player/v1/{id} → video src | Yes; audio + video |
+| Threads | Public page JSON → matching code → video_versions | Yes; audio + video |
+| Reddit | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL resolution blocked |
+| LinkedIn | Public video data-sources → progressive MP4 | Yes; audio + video |
+| Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
+| Telegram | Public message widget → scoped video src | Yes; audio + video |
+| Vimeo | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
+| Twitch | Public clip player video src → MP4 | Yes; audio + video |
+| Douyin 抖音 | Mobile share player → playwm → MP4 | Yes; audio + video |
+| Bilibili 哔哩哔哩 | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
+| 小红书 / Xiaohongshu | Public note page → playing video src (attempted) | NO; risk wall |
+| WeChat 视频号 | Public sph page → video src (attempted) | NO; QR / app-only page |
+| WeChat 公众号 | Public article HTML; public player for attached video | Current article request hit verification; embedded media not verified |
 
-### Chinese
-
-| Platform | Status | What counts as reading it | Notes |
-| --- | --- | --- | --- |
-| **Bilibili** | Speech when uploader CC exists; graphics need a file | CC = speech. Frames = graphics, and only after a real file | `desc` is metadata. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. |
-| **Douyin 抖音** | Media required; auto-acquire works | mp4 from `acquire_douyin.py`, then frames + OCR + vision + ASR | Mac, 2026-10-26: short link `v.douyin.com/2qulGbSTiRI` → aweme `7696098282904259850` re-downloaded repeatedly (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
-| **WeChat 公众号** | Article body on short `/s/<id>` links | Article HTML. Embedded 视频号 → media file | Verification → user paste. Do not solve captchas. |
-| **WeChat 视频号** | Media required | User export/save, then the media pipeline | sph WebFetch caption is metadata. Feed paths stay blocked (`errCode 10012`). |
-
-See `skills/social-content-reader/platforms/*.md`. Shared video steps: [`platforms/_video-body.md`](skills/social-content-reader/platforms/_video-body.md).
-
-Platform recipes for LinkedIn / 小红书 / Telegram / Twitch still exist under `platforms/` but are not listed as supported.
+Platform recipes: [`platforms/`](skills/social-content-reader/platforms/). Shared steps: [`_video-body.md`](skills/social-content-reader/platforms/_video-body.md).
 
 ## Media pipeline
 
@@ -95,7 +98,12 @@ python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/c
 
 Then the host agent describes the frames with its video/vision tools. Understanding is written from those three reads. The share caption is a side note. If acquire fails, say the video was not watched.
 
-`ffmpeg` is required for frames. `yt-dlp` is the documented public acquire CLI when the user asked to read a video and a run on that URL has actually saved a file. As of Mac 2026-10-26 that is YouTube; TikTok was IP-blocked and Bilibili returned HTTP 412, so those are not verified file recipes. Tesseract is optional; OCR fails honestly when it is missing. macOS can use Vision via `swiftc` (`--engine vision`).
+Acquire first with `python3 skills/social-content-reader/scripts/acquire_media.py URL --out-dir ~/Media/acquired`.
+Setup and JSON contract: [scripts/README.md](skills/social-content-reader/scripts/README.md).
+The helper uses ffprobe, fresh Playwright contexts, and narrowly scoped yt-dlp
+paths. It saves a receipt with hash, duration and audio/video presence.
+Tesseract is optional; macOS can use Vision (`--engine vision`).
+No caption-only Understanding, browser cookie extraction or captcha bypass.
 
 Speech on a file the user already has:
 
@@ -139,13 +147,15 @@ social-content-reader/
     platforms/          # youtube, x, instagram, tiktok, threads, reddit,
                         # facebook, vimeo, bilibili, douyin, wechat-*
                         # _video-body.md  (shared video + graphics recipe)
-                        # linkedin, telegram, twitch, xiaohongshu stay on disk, unlisted
+                        # all 16 recipes; current verified/blocked status above
     scripts/
       normalize_url.py
       extract_frames.py
       ocr_frames.py
       ocr_vision.swift
+      acquire_media.py
       acquire_douyin.py
+      smoke_acquire.py
       asr_local.py
     references/
 ```

@@ -3,12 +3,12 @@ name: social-content-reader
 description: >
   Read and understand social videos and posts by watching the media: frames,
   burned-in text, and speech. Use when the user pastes a YouTube, X/Twitter,
-  Instagram, TikTok, Threads, Reddit, Facebook, Vimeo, Douyin, Bilibili,
+  Instagram, TikTok, Threads, Reddit, LinkedIn, Facebook, Telegram, Vimeo, Twitch, Douyin,
+  Bilibili, Xiaohongshu,
   WeChat 公众号, or WeChat 视频号 URL — or supplies a local audio/video
   file — and the agent needs the on-screen picture, graphics, and spoken
   words. A share caption is optional metadata, never the only body. If the
-  media file cannot be acquired, say so. LinkedIn, 小红书, Telegram, and
-  Twitch recipes exist under platforms/ and are not supported. Prefer an
+  media file cannot be acquired, say so. Prefer an
   existing platform connector if present; otherwise follow this skill's
   documented public fetch paths. Windows 24/7 is fine for heavy jobs. Mac
   and Linux are fully supported for Codex skill load, fetch, frame
@@ -22,7 +22,7 @@ compatibility: >
   heavy jobs; Mac and Linux fully support Codex skill load, fetch, and ASR.
 metadata:
   author: Anthony-Pan
-  version: "0.4.0"
+  version: "0.5.0"
   runtime: "Windows 24/7 OK for heavy jobs; Mac/Linux fully supported for Codex skill load + fetch + ffmpeg frames + ASR"
 ---
 
@@ -41,7 +41,7 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
 
 - User already pasted the full transcript **and** described the visuals (just reason over that).
 - Task is posting, liking, following, or any write action (out of scope).
-- Request is to bypass login, captcha, paywall, or DRM (refuse; ask for a user export or official access).
+- Request is to bypass login, captcha, paywall, or DRM (stop that route; use authorized access).
 
 ## Core recipe (always)
 
@@ -51,7 +51,7 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
    - **Written post or article** (Reddit selftext, X/Threads text, 公众号 article): the written body is the post. An attached video still uses the media pipeline.
 3. **Prefer a host connector** when it returns a real transcript, permitted media, or the article body. Metadata-only connectors are not finished.
 4. **Video pipeline** — follow [platforms/_video-body.md](platforms/_video-body.md) and the platform doc:
-   1. **Acquire** a local video/audio file (or a user-exported keyframe set). Douyin’s default is `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → `douyin_{id}.mp4`) with no user export step. Mac, 2026-10-26: that helper re-downloaded aweme `7696098282904259850` repeatedly. `yt-dlp` is an allowed public CLI when the user asked to read the video and a run has saved a file (YouTube on that Mac). TikTok was IP-blocked and Bilibili returned HTTP 412; do not claim those file recipes. App Save/export is the fallback when the documented player has no media URL. ToS-sensitive downloaders other than those documented paths need explicit approval for that URL.
+   1. **Acquire automatically:** `scripts/acquire_media.py URL --out-dir DIR` uses the documented public route for the requested platform and validates a saved video file. TikTok uses the official embed player; Bilibili uses the external player's own full-range media requests plus local mux. See the live matrix below for all successes and failures. A caption is metadata. User export is last resort after the documented automatic path and any configured authorized media integration fail. No browser profile extraction, captcha defeat, private API clients or decryption.
    2. **Frames:** `scripts/extract_frames.py` (`--mode fps` or `--mode scene`).
    3. **Burned-in text:** `scripts/ocr_frames.py` (Tesseract, or macOS Vision when available). If OCR is absent, say so.
    4. **Vision:** the host agent describes the video file and the frames with its video/vision tools (`visual_description`). This skill does not ship a vision model. Do not invent the picture.
@@ -66,7 +66,7 @@ Platform docs:
 - Overseas: [youtube.md](platforms/youtube.md), [x.md](platforms/x.md), [instagram.md](platforms/instagram.md), [tiktok.md](platforms/tiktok.md), [threads.md](platforms/threads.md), [reddit.md](platforms/reddit.md), [facebook.md](platforms/facebook.md), [vimeo.md](platforms/vimeo.md)
 - Chinese: [bilibili.md](platforms/bilibili.md), [douyin.md](platforms/douyin.md), [wechat-article.md](platforms/wechat-article.md), [wechat-channels.md](platforms/wechat-channels.md)
 - Shared video steps: [_video-body.md](platforms/_video-body.md)
-- Not supported (files remain): [linkedin.md](platforms/linkedin.md), [telegram.md](platforms/telegram.md), [twitch.md](platforms/twitch.md), [xiaohongshu.md](platforms/xiaohongshu.md)
+- Additional global / Chinese recipes: [linkedin.md](platforms/linkedin.md), [telegram.md](platforms/telegram.md), [twitch.md](platforms/twitch.md), [xiaohongshu.md](platforms/xiaohongshu.md)
 
 ## Media commands
 
@@ -100,13 +100,15 @@ py -3.12 skills\social-content-reader\scripts\asr_local.py --media "C:\Media\vid
 
 ASR backend preference: `faster-whisper` → `openai-whisper` → OpenAI Whisper API (`OPENAI_API_KEY`). Prefer local ASR. Confirm API upload authorization before cloud; pin a local backend when uploads are not authorized. Require exit code 0, `ok: true`, and nonempty `text` before calling it speech. See [scripts/README.md](scripts/README.md).
 
-Acquire example when the user asked to read a public video and the platform doc allows yt-dlp:
+Automatic acquire (fresh browser contexts; no saved cookie/profile reads):
 
 ```bash
-yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<video url>"
+python3 skills/social-content-reader/scripts/acquire_media.py '<public video URL>' --out-dir "$HOME/Media/acquired"
 ```
 
-Stop on login, captcha, or DRM. No cookie theft and no private API client.
+Require exit 0, `ok: true`, a real video path, positive duration and its receipt.
+Check `has_audio`; silent/video-only evidence does not establish speech.
+[Setup and limits](scripts/README.md). Stop on login, captcha, risk walls or DRM.
 
 ## Codex heavy lift
 
@@ -139,33 +141,30 @@ codex exec --full-auto "Use skills/social-content-reader: acquire the media, rea
 - Do not write Understanding from the caption. Caption/oEmbed/description is not a watched video.
 - If acquire fails, say so. Do not fall back to a caption Understanding.
 - Official transcript tracks count as **speech**. They do not describe graphics. Frames + vision cover the picture.
-- `yt-dlp` may be recommended when the user asked to read the video. Other ToS-sensitive download tools need explicit approval for that URL.
+- Use the documented public acquisition routes for the requested URL. Do not add private API clients, challenge solvers or decryption tools. User export is last resort after automatic acquire fails.
 - Always prefer connector-if-present over brittle scrapers.
 
 ## Quick platform matrix
 
-Video status means **media understanding** (picture and speech), not caption-only. Details: [platforms/_video-body.md](platforms/_video-body.md).
+All 16 platforms are available as documented recipes. “Verified” below means
+a sample media file was saved and validated on this Mac, not universal access
+or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](../../SMOKE_RESULTS.md).
 
-### Overseas / global
-
-| Platform | Video / graphic status | Prefer |
+| Platform | Automatic acquire method | Mac result / remaining wall |
 | --- | --- | --- |
-| YouTube | Works when media or transcript+frames are read | Host transcript for speech + frames for graphics. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file. That file is not Understanding by itself. Description is not the body. |
-| X/Twitter | Post text works; attached video needs a file | Host X connector for the post. Video → media pipeline. |
-| Instagram | Media required for a Reel | User Save/export or `yt-dlp` when the user asked to read it. oEmbed is not the Reel. |
-| TikTok | Media required | A local file, then the media pipeline. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. Do not treat `yt-dlp` as a verified TikTok file recipe until a sample saves a file. oEmbed caption is metadata. |
-| Threads | Post text when public; video needs a file | oEmbed / public page for the post. Video → media pipeline. |
-| Reddit | Public selftext works; v.redd.it needs a file | `.json` for the post. Video → media pipeline. |
-| Facebook | Page post when authorized; Reel needs a file | Graph / paste for the post. Video → media pipeline. |
-| Vimeo | Works when text tracks or a file are read | Text tracks = speech. Frames for graphics. Description is not the body. |
-
-### Chinese
-
-| Platform | Video / graphic status | Prefer |
-| --- | --- | --- |
-| Bilibili | Speech when uploader CC exists; graphics need a file | View API + subtitles for speech. Graphics need a real file. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. `desc` is not speech. |
-| Douyin 抖音 | Media required; auto-acquire works repeatedly | `acquire_douyin.py`: homepage cookies, then `m.douyin.com/share/video/{id}`, then the `<video>` playwm URL → CDN mp4. Mac, 2026-10-26: aweme `7696098282904259850` re-downloaded from `v.douyin.com/2qulGbSTiRI` (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
-| WeChat 公众号 | Article body on short `/s/<id>` links | WebFetch/curl for the article. Embedded 视频号 → media pipeline. |
-| WeChat 视频号 | Media required | User export/save. sph WebFetch caption is metadata. Feed paths stay `errCode 10012`. |
-
-LinkedIn, 小红书, Telegram, and Twitch are not in this matrix. Their `platforms/*.md` files remain and are not supported.
+| YouTube | yt-dlp public player | Yes; audio + video |
+| X / Twitter | yt-dlp public syndication | Yes; audio + video |
+| Instagram | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
+| TikTok | Documented /player/v1/{id} → video src | Yes; audio + video |
+| Threads | Public page JSON → matching code → video_versions | Yes; audio + video |
+| Reddit | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL resolution blocked |
+| LinkedIn | Public video data-sources → progressive MP4 | Yes; audio + video |
+| Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
+| Telegram | Public message widget → scoped video src | Yes; audio + video |
+| Vimeo | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
+| Twitch | Public clip player video src → MP4 | Yes; audio + video |
+| Douyin 抖音 | Mobile share player → playwm → MP4 | Yes; audio + video |
+| Bilibili 哔哩哔哩 | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
+| 小红书 / Xiaohongshu | Public note page → playing video src (attempted) | NO; risk wall |
+| WeChat 视频号 | Public sph page → video src (attempted) | NO; QR / app-only page |
+| WeChat 公众号 | Public article HTML; public player for attached video | Current article request hit verification; embedded media not verified |

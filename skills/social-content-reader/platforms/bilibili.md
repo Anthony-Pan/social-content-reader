@@ -1,50 +1,28 @@
 # Bilibili 哔哩哔哩
 
-**Status:** Speech often works when uploader CC exists. A file download is **not** verified. Mac, 2026-10-26: `yt-dlp` returned **HTTP 412**. Public playurl still needs a recipe that has actually saved a file. Graphics need that file. The description is not the video.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; AV1 + AAC.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.bilibili.com/video/BV{id}`
-- `https://www.bilibili.com/video/av{aid}`
-- `https://b23.tv/{short}` (resolve redirects)
-- Bangumi / cheese (course) URLs may be paywalled — handle as unavailable without access
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-Uploader CC / subtitles are **speech** (`speech_text`). Default video Understanding also runs frames, OCR, and host vision on a local file ([_video-body.md](_video-body.md)). Do not claim `yt-dlp` or a public playurl gets that file: on Anthony’s Mac, 2026-10-26, `yt-dlp` returned HTTP 412. `desc` stays in `caption`. Danmaku is not speech unless the user asks for comment analysis. If there is no CC and no file, say the video was not watched.
-
-## Prefer (in order)
-
-1. **Host Bilibili connector / MCP** if present (metadata + subtitles).
-2. **Public view API + player subtitle endpoints** commonly used by third-party clients for *public* videos (no login). Typical flow:
-   - Resolve bvid/aid
-   - `https://api.bilibili.com/x/web-interface/view?bvid=BV…` for title/owner/desc
-   - Obtain subtitle list from the player/subtitle API associated with the `cid` when the uploader provided CC
-   - Use browser-like Referer `https://www.bilibili.com` when required by the API
-3. If no subtitles: a local file the user already has → `asr_local.py` (`--language zh` or `auto`) plus frames. `yt-dlp` / public playurl is not a verified acquire until a run saves a video file. HTTP 412 means stop and say the file was not acquired.
-4. Description (`desc`) alone is not speech and not the picture. Store it in `caption` and set `body_kind: unavailable` until media or CC is read.
-
-## Fetch recipe
-
-1. Normalize b23 short links; extract BV id (`normalize_url.py`).
-2. Fetch view metadata; then subtitles when available.
-3. Set `body_kind: media_understanding` when CC/ASR and frames were both read. CC without frames is `transcript` (graphics unread). Desc-only is `unavailable` plus `caption`.
-4. Summarize from speech + visuals; credit UP main; note danmaku is optional and not the same as speech.
-
-## Honest limits
-
-- 大会员 / paywalled / region-locked content → unavailable without authorization.
-- Respect Bilibili ToS; polite rates; no login bypass.
-- Danmaku (bullet comments) ≠ video speech unless the user asks for comment analysis.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/bilibili.md and platforms/_video-body.md. URL: <URL>
-Subtitles or ASR for speech. Frames for graphics. desc is metadata.
-If both are missing, say the video was not watched.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.bilibili.com/video/BV17x411w7KC' --out-dir "$HOME/Media/bilibili"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Bilibili open web APIs (view / player) used for public metadata and CC
+**Method:** External player → observed full-range video/audio → mux. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+Main page/view API returned HTTP 412; the external player works for this sample. Capture its own .m4s requests, reuse normal Origin/Referer/User-Agent and Range: bytes=0-, require complete Content-Range, then ffmpeg mux. No signed API generation, CC substitution or decryption. BV1GJ411x7h7 produced error.mp4 and is rejected.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/bilibili/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

@@ -1,54 +1,30 @@
 # Reddit
 
-**Status:** Works for public posts/comments via public JSON (`.json`) and/or a host Reddit connector. Reddit-hosted video still needs a media file.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; video only; post URL blocked.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.reddit.com/r/{sub}/comments/{id}/{slug}/`
-- `https://reddit.com/...`, `https://old.reddit.com/...`
-- `https://www.reddit.com/comments/{id}/`
-- Short: `https://redd.it/{id}`
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-`selftext` is the written post (`body_kind: post_text` or `article`). A `v.redd.it` video, a video link, or an image that carries the claim is not understood from the title. Acquire the file (user save, or `yt-dlp` when the user asked to read that public video), then follow [_video-body.md](_video-body.md). If acquire fails, say the video was not watched. The title and selftext stay available as the post, labeled as text.
-
-## Prefer (in order)
-
-1. **Host Reddit connector / MCP** if present.
-2. **Public JSON append** (documented Reddit convenience for public pages):
-   Append `.json` to the post URL (strip tracking query noise first), e.g.
-   `https://www.reddit.com/r/{sub}/comments/{id}/{slug}.json`
-   Use a descriptive User-Agent string (Reddit asks clients to identify themselves). Example:
-   ```powershell
-   curl.exe -L -A "social-content-reader/0.4 (by Anthony-Pan; research)" "https://www.reddit.com/r/EXAMPLE/comments/POSTID/title.json"
-   ```
-3. User paste if JSON is blocked (403) or the post is quarantined/NSFW-gated without access.
-
-## Fetch recipe
-
-1. Normalize to a canonical comments URL + id via `normalize_url.py`.
-2. Fetch `.json`; take `data.children[0].data` for the submission (`title`, `selftext`, `author`, `subreddit`, `created_utc`).
-3. Optionally include top-level comment bodies (mark as comments, not OP body).
-4. Set `body_kind: post_text` (or `article` for long self-posts), `fetch_method: public_api` / `public_curl`.
-5. For link-posts with empty `selftext`, note that the body is external — follow the linked URL with its own platform recipe when useful.
-6. Understanding: OP claim + notable top comments if fetched.
-
-## Honest limits
-
-- Private subs, quarantined, removed, or account-gated content → unavailable without authorized access.
-- Respect Reddit API Terms; identify your UA; do not hammer endpoints.
-- Media (video/image) uses [_video-body.md](_video-body.md). Title-only is not a watched video.
-- OAuth Reddit API is preferred for production volume; `.json` is fine for occasional agent reads of public posts.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/reddit.md. URL: <URL>
-Fetch public .json; return ContentRecord (OP selftext) + understanding.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://v.redd.it/gyh95hiqc0b11' --out-dir "$HOME/Media/reddit"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Reddit API rules / User-Agent requirements
-- Public `.json` convenience on reddit.com pages
+**Method:** Public v.redd.it DASH manifest → yt-dlp. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+The media id is independently known from the public yt-dlp Reddit test fixture for post 90bu6w. That post page/JSON and redditmedia embed were blocked on this Mac. CDN success does not prove arbitrary post-to-media resolution. No audio track in this sample manifest.
+
+For a post URL, prefer an authorized connector, then public post HTML / `.json` to obtain its actual `reddit_video.dash_url` or media id. This network blocked that step: the helper cannot invent a CDN id from a post id. With an already public `v.redd.it/{media_id}` URL, the helper reads `DASHPlaylist.mpd`, downloads video plus audio when present, and validates the result. Public source of this test mapping: https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/reddit.py
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/reddit/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

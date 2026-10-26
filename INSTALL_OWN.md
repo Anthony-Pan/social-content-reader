@@ -1,6 +1,6 @@
 # Install on Anthony’s own computers / agents
 
-How **Anthony’s bots** should load and invoke `social-content-reader` (v0.4.0+).
+How **Anthony’s bots** should load and invoke `social-content-reader` (v0.5.0+).
 
 Windows 24/7 is fine for heavy extract/summarize jobs. Mac and Linux are fully supported for Codex skill load, fetch, ffmpeg frames, OCR, and ASR.
 
@@ -69,21 +69,38 @@ cp -a "$SRC" /home/box/sand-data/managed-skills/skills/social-content-reader
 
 Grok Bot parent agents should `Skill` load `social-content-reader` by name once the package is on a scanned skills path.
 
-## Douyin acquire (Mac)
+## Automatic acquire (Mac)
 
-Mac is the approved machine for a live run of this helper. Understanding is still frames, OCR, speech, and the host video tool. The JSON from this command is the file, not a caption.
+Install browser dependencies in a dedicated environment (no browser profile or
+saved-cookie access):
 
 ```bash
-python3 -m pip install -r ~/Developer/social-content-reader/skills/social-content-reader/scripts/requirements-acquire.txt
-python3 -m playwright install chromium
-python3 ~/Developer/social-content-reader/skills/social-content-reader/scripts/acquire_douyin.py \
-  "https://v.douyin.com/2qulGbSTiRI/" \
-  --out-dir "$HOME/Media"
+cd ~/Developer/social-content-reader
+python3 -m venv .venv-acquire
+.venv-acquire/bin/pip install -r skills/social-content-reader/scripts/requirements-acquire.txt
+.venv-acquire/bin/playwright install chromium
+# ffmpeg/ffprobe and yt-dlp must also be installed and on PATH.
+.venv-acquire/bin/python -B skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.tiktok.com/@scout2015/video/6718335390845095173' --out-dir "$HOME/Media"
 ```
 
-A bare aweme id works in the same position: `7696098282904259850`. Stdout is one JSON object: `ok`, `path` (`$HOME/Media/douyin_7696098282904259850.mp4`), `bytes`, `content_type`, `aweme_id`, `play_url`. Playwright uses a mobile Chromium UA, opens `https://www.douyin.com/` for cookies, then `https://m.douyin.com/share/video/{id}`, reads `<video>.currentSrc` (the playwm URL), and GETs it with redirects in that same browser. Then run `extract_frames.py`, `ocr_frames.py`, and `asr_local.py` on `path`. Re-downloaded on Anthony’s Mac, 2026-10-26; the same helper acquired this aweme repeatedly there. A download under 20KB is a failure. `body_snip` on failure is a page excerpt, not Understanding.
+Use the venv Python above, or activate it before using the `python3` examples
+in the platform docs. Windows uses the corresponding venv `Scripts/python.exe`
+and `Scripts/playwright.exe`; the live matrix here was run on this Mac.
 
-Windows uses the same two install commands with `py -3.12 -m` instead of `python3 -m`.
+Require exit 0, `ok: true`, actual video `path`, positive duration and its
+SHA-256 receipt. Check `has_audio`. Then read frames, OCR, host vision and
+speech. Acquisition is not Understanding. See [SMOKE_RESULTS.md](SMOKE_RESULTS.md)
+for 13 verified video-platform samples and the explicit remaining walls.
+
+The dedicated `acquire_douyin.py URL_OR_ID --out-dir DIR` still supports
+`https://v.douyin.com/2qulGbSTiRI/` and aweme `7696098282904259850`. It uses
+ordinary mobile Chromium, `https://www.douyin.com/` then
+`https://m.douyin.com/share/video/{id}`, and its playing `/aweme/v1/playwm` URL.
+It now requires HTTP 200 and ffprobe video validation as well as size checks.
+No webdriver masking or saved browser cookies are used. `body_snip` on failure
+is diagnosis, not Understanding. User export is last resort after automatic
+acquisition fails.
 
 ## Media tools (Mac and Linux)
 
@@ -172,7 +189,7 @@ The sph example should print `platform` `wechat-channels` and `canonical_id` `AA
 
 ## Success check
 
-1. Skill folder exists under `~/.agents/skills/social-content-reader/SKILL.md` (version `0.4.0` in frontmatter). On Mac that path is a symlink to `~/Developer/social-content-reader/skills/social-content-reader`.
+1. Skill folder exists under `~/.agents/skills/social-content-reader/SKILL.md` (version `0.5.0` in frontmatter). On Mac that path is a symlink to `~/Developer/social-content-reader/skills/social-content-reader`.
 2. `normalize_url.py` detects YouTube, Reddit, TikTok, Bilibili, and `weixin.qq.com/sph/<id>` (`link_form: sph_share`).
 3. `ffmpeg -version` and `extract_frames.py --help` succeed. A two-second generated sample (`ffmpeg -f lavfi -i testsrc=duration=2:size=160x120:rate=10`) extracts at least two frames with timestamps.
 4. `python3 ... asr_local.py --help` (Mac/Linux) or `py -3.12 ... asr_local.py --help` (Windows) exits 0 after deps install.

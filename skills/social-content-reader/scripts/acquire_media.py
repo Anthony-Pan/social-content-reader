@@ -96,7 +96,10 @@ def route(url):
         m = re.search(r"BV[0-9A-Za-z]+", url)
         if not m:
             raise AcquireError("use the resolved Bilibili BV URL")
-        return "bilibili", f"https://player.bilibili.com/player.html?bvid={m[0]}&autoplay=1", m[0]
+        part = parse_qs(p.query).get("p", ["1"])[0]
+        if not part.isdigit() or int(part) < 1:
+            raise AcquireError("invalid Bilibili part number")
+        return "bilibili", f"https://player.bilibili.com/player.html?bvid={m[0]}&p={int(part)}&autoplay=1", m[0]
     if domain("t.me"):
         m = re.fullmatch(r"/(?:s/)?([A-Za-z][A-Za-z0-9_]+)/(\d+)/?", path)
         if not m:
@@ -128,6 +131,11 @@ def route(url):
             raise AcquireError("use the public Vimeo video or player URL")
         # Preserve the owner's supplied unlisted access hash, never invent one.
         return "vimeo", f"https://player.vimeo.com/video/{m[1]}" + ("?" + p.query if p.query else ""), m[1]
+    if host == "v.redd.it":
+        m = re.fullmatch(r"/([a-z0-9]+)(?:/DASHPlaylist\.mpd)?/?", path)
+        if not m:
+            raise AcquireError("expected a public v.redd.it media id or DASHPlaylist.mpd URL")
+        return "reddit", f"https://v.redd.it/{m[1]}/DASHPlaylist.mpd", m[1]
     for d, platform in [("linkedin.com", "linkedin"), ("twitch.tv", "twitch"),
                         ("xiaohongshu.com", "xiaohongshu"), ("xhslink.com", "xiaohongshu"),
                         ("reddit.com", "reddit"), ("v.redd.it", "reddit"),
@@ -278,7 +286,7 @@ def acquire_ytdlp(platform, url, work, max_bytes):
         raise AcquireError("yt-dlp is not installed")
     args = ["yt-dlp", "--ignore-config", "--no-playlist", "--no-progress", "--no-overwrites",
             "--retries", "0", "--fragment-retries", "0", "--socket-timeout", "20",
-            "--max-filesize", str(max_bytes), "-f", "bv[height<=480]+ba/b", "--merge-output-format", "mp4",
+            "--max-filesize", str(max_bytes), "-f", "bv[height<=480]+ba/b/bv[height<=480]", "--merge-output-format", "mp4",
             "-o", str(work / "media.%(ext)s")]
     if platform == "x":
         args += ["--extractor-args", "twitter:api=syndication"]
@@ -305,7 +313,7 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
         out_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix=".acquire-", dir=out_dir) as temp:
             work = Path(temp)
-            if platform in ("youtube", "vimeo", "x"):
+            if platform in ("youtube", "vimeo", "x") or (platform == "reddit" and ident):
                 path, method, expected = acquire_ytdlp(platform, player, work, max_mb * 1024**2)
             elif platform == "douyin":
                 from acquire_douyin import acquire as douyin_acquire

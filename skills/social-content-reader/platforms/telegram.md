@@ -1,45 +1,30 @@
-# Telegram (public posts)
+# Telegram
 
-**Status:** Partial — public channel posts via `t.me/s/` preview pages. Video and voice notes need a file. Private chats/channels are unavailable without a user export.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- Public channel post: `https://t.me/{channel}/{message_id}`
-- Preview form: `https://t.me/s/{channel}/{message_id}`
-- Invite links (`t.me/+…`, `joinchat`) → **not** publicly readable
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-Preview text is the message (`body_kind: post_text`). A video file follows [_video-body.md](_video-body.md) (frames, OCR, host vision, ASR). A voice note is speech-only: `asr_local.py`, `body_kind: transcript`, and a limit that there is no picture. The message caption is not the video. If the file cannot be acquired, say so.
-
-## Prefer (in order)
-
-1. **Host Telegram connector / Bot API** if the bot is already a member and authorized.
-2. **Public preview page** `https://t.me/s/{channel}/{id}` via WebFetch/curl — extract the post text from the preview HTML when the channel is public.
-3. User forward/export/paste of the message text.
-4. Voice notes: user-exported audio + ASR (speech only). Video: user-exported file + the [media pipeline](_video-body.md).
-
-## Fetch recipe
-
-1. If URL is `/s/` missing, try constructing `https://t.me/s/{channel}/{id}` for public channels only.
-2. Fetch preview; parse visible message text; set `body_kind: post_text`, `fetch_method: public_webfetch`.
-3. If preview requires join/login or returns empty, stop — ask for paste or bot access.
-4. Understanding of a text message comes from the message text. Video claims wait for the media pipeline.
-
-## Honest limits
-
-- Private channels, groups, and DMs: **no** public fetch. Use user export or an authorized bot already inside.
-- Do not scrape Telegram private APIs or steal `tdata` / session files.
-- Bot API requires a bot token in env (`TELEGRAM_BOT_TOKEN`) — never commit it.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/telegram.md. URL: <URL>
-Try t.me/s/ preview for public channels only. Else ask for paste.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://t.me/telegram/402' --out-dir "$HOME/Media/telegram"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Telegram Bot API
-- Public channel preview pages (`t.me/s/…`)
+**Method:** Public message widget → scoped video src. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+Use `?embed=1` and exact `data-post="telegram/402"`. `/s/channel/id` also returns neighboring messages; taking the first video there is incorrect. Private chats/invites and member-only media remain unavailable.
+
+Official public post widget: https://core.telegram.org/widgets/post
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/telegram/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

@@ -41,7 +41,7 @@ def acquire(url_or_id: str, out_dir: Path) -> dict:
     with sync_playwright() as p:
         browser = p.chromium.launch(
             headless=True,
-            args=["--disable-blink-features=AutomationControlled", "--autoplay-policy=no-user-gesture-required"],
+            args=["--autoplay-policy=no-user-gesture-required"],
         )
         context = browser.new_context(
             locale="zh-CN",
@@ -54,9 +54,6 @@ def acquire(url_or_id: str, out_dir: Path) -> dict:
                 "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 "
                 "Mobile/15E148 Safari/604.1"
             ),
-        )
-        context.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
         page = context.new_page()
         page.goto("https://www.douyin.com/", wait_until="domcontentloaded", timeout=60000)
@@ -102,18 +99,16 @@ def acquire(url_or_id: str, out_dir: Path) -> dict:
             play,
             max_redirects=10,
             headers={"Referer": share},
+            timeout=60000,
         )
         data = resp.body()
         ct = resp.headers.get("content-type", "")
         browser.close()
 
-        if len(data) < 50000 or "video" not in ct and not data[:12]:
-            # still save if looks like mp4 ftyp
-            pass
-        if len(data) < 20000:
+        if resp.status != 200 or len(data) < 20000:
             return {
                 "ok": False,
-                "error": "download too small",
+                "error": "media HTTP error or download too small",
                 "aweme_id": aweme_id,
                 "play_url": play,
                 "bytes": len(data),
@@ -121,7 +116,15 @@ def acquire(url_or_id: str, out_dir: Path) -> dict:
             }
 
         path = out_dir / f"douyin_{aweme_id}.mp4"
-        path.write_bytes(data)
+        pending = out_dir / f".douyin_{aweme_id}.part.mp4"
+        pending.write_bytes(data)
+        try:
+            from acquire_media import probe
+            media_info = probe(pending)
+            pending.replace(path)
+        except Exception:
+            pending.unlink(missing_ok=True)
+            return {"ok": False, "error": "download failed ffprobe video validation", "aweme_id": aweme_id}
         return {
             "ok": True,
             "path": str(path),
@@ -131,6 +134,7 @@ def acquire(url_or_id: str, out_dir: Path) -> dict:
             "play_url": play,
             "title": title,
             "cdn_url": resp.url,
+            **media_info,
         }
 
 
@@ -139,7 +143,10 @@ def main() -> int:
     ap.add_argument("url_or_id", help="Douyin share/video URL or aweme id")
     ap.add_argument("--out-dir", default=".", type=Path)
     args = ap.parse_args()
-    result = acquire(args.url_or_id, args.out_dir)
+    try:
+        result = acquire(args.url_or_id, args.out_dir)
+    except Exception as exc:
+        result = {"ok": False, "error": f"{type(exc).__name__}: Douyin acquire failed"}
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("ok") else 1
 

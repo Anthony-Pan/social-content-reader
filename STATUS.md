@@ -1,53 +1,57 @@
 # STATUS — social-content-reader
 
-**Version:** 0.4.0
-**Updated:** 2026-10-26 Mac matrix
+**Version:** 0.5.0
+**Updated:** 2026-10-26, Mac acquisition matrix
+
+All 16 platforms are listed again, with documented automatic attempts and
+explicit failures. **13 video platforms saved real sample media.** 小红书
+(IP-risk wall) and 视频号 (QR/app-only share surface) remain unsolved within
+the allowed public acquisition paths. 公众号's current article request hit
+verification; embedded media was not acquired. Reddit's public CDN file is
+verified, while arbitrary post-to-media resolution is still blocked.
+
+The full all-platform goal remains partially unmet; listing a platform is not
+a claim of unrestricted access or completed Understanding.
+
+## Shipped
+
+- `acquire_media.py`: public players / scoped yt-dlp routes, fresh contexts,
+  no user profile extraction; validated local files and SHA-256 receipts.
+- TikTok official embed, Bilibili external-player full-range tracks + local
+  mux, public Instagram/Threads/Facebook post-matched media, Telegram exact
+  widget, LinkedIn public video sources and Twitch clips. YouTube, Douyin,
+  Vimeo and independently known public Reddit CDN media are verified too.
+- Existing `acquire_douyin.py` now rejects HTTP errors/non-media using
+  ffprobe, removes partial files, and no longer hides webdriver. The normal
+  mobile player still saved its 8,382,047-byte sample after that change.
+- `smoke_acquire.py --platform NAME|--all --proof-dir DIR` replays opt-in
+  public samples and records PASS/FAIL. Does not run in the unit suite.
+- Media-first rule unchanged: captions/oEmbed/descriptions are metadata.
+  Files feed frames + OCR + host vision + speech; acquisition alone is not
+  Understanding. User export follows failed automatic paths as last resort.
+
+## Evidence
+
+[SMOKE_RESULTS.md](SMOKE_RESULTS.md) contains every source, file, byte count,
+stream limit and remaining wall. Local proof:
+`~/Developer/scr-proof/matrix-2026-10-26/` (`matrix.json`, PASS/FAIL notes,
+media, hashes, decoded frames and decode logs). All 13 counted files fully
+decoded without FFmpeg errors. Unit suite: 55 passed.
+
+## Remaining work
+
+- A legitimate public player or configured authorized media integration for
+  小红书 and 视频号; no successful general route is claimed.
+- Reddit post-to-media resolution on a network/account with permitted access.
+- Long Twitch VOD and 公众号 embedded-video live proof.
+- Speech/vision Understanding on newly acquired samples as requested; this
+  release run tests acquisition and decoding, not ASR quality.
 
 ## Locations
 
-- GitHub: https://github.com/Anthony-Pan/social-content-reader (public)
-- Box clone: `/workspace/social-content-reader`
+- GitHub: https://github.com/Anthony-Pan/social-content-reader
 - Mac clone: `~/Developer/social-content-reader`
+- Mac installed skill: `~/.agents/skills/social-content-reader` points to
+  `skills/social-content-reader/` in this checkout.
 - Windows clone: `C:\Users\aw\source\repos\social-content-reader`
-- User skill (Mac/Linux): `~/.agents/skills/social-content-reader` and `~/.cursor/skills/social-content-reader` → skill package
-- User skill (Windows): `%USERPROFILE%\.agents\skills\social-content-reader` (+ `.cursor\skills\…`)
-- User skill (box): `/home/box/.agents/skills/social-content-reader` (+ managed-skills copy)
-
-## v0.4.0
-
-- Default video success is a local media file: frames (`extract_frames.py`), burned-in text (`ocr_frames.py`, Tesseract or macOS Vision), host vision description, and speech (`asr_local.py` or an official transcript).
-- Share captions, oEmbed titles, and descriptions are `caption` metadata. They are not Understanding. Acquire failure is `body_kind: unavailable` / `fetch_method: acquire_failed` or `blocked`.
-- `yt-dlp` is a public acquire CLI only where a run has saved a file. Mac, 2026-10-26: YouTube `yt-dlp` saved a file (that file is not Understanding by itself). The TikTok sample was IP-blocked. Bilibili `yt-dlp` returned HTTP 412; public playurl is not a verified file recipe. Uploader CC remains a speech path when the subtitle API returns cues. No cookie theft, captcha defeat, or private API client.
-- Douyin share `https://v.douyin.com/2qulGbSTiRI` is aweme `7696098282904259850`. iesdouyin curl still returns a JS shell and that page often shows 「请尝试在抖音内观看」. The verified helper is `scripts/acquire_douyin.py` (positional URL or aweme id, `--out-dir`, writes `douyin_{aweme_id}.mp4`, JSON `ok` / `path` / `bytes` / `content_type` / `aweme_id` / `play_url`). Mac, 2026-10-26: it re-downloaded this aweme repeatedly (~8MB, 1280×720, ~49s) via Playwright mobile UA, `www.douyin.com` cookies, `m.douyin.com/share/video/{id}`, `<video>` playwm, same-context GET with Referer. User export is only the fallback when that page has no video src. Caption is not Understanding. A download under 20KB fails. `body_snip` is diagnosis, not the body.
-
-## v0.3.1
-
-- `weixin.qq.com/sph/<id>` (and `www`) normalizes to `wechat-channels`, `link_form: sph_share`, canonical `https://weixin.qq.com/sph/<id>`.
-- Sph share WebFetch returns caption/description (measured: `AAZ3p39sQm`), not spoken video. Speech still needs user media + `asr_local.py`.
-- `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`).
-- Mac/Linux Codex skill install documented next to Windows. Windows 24/7 remains fine for heavy jobs.
-
-## Matrix (honest, Mac 2026-10-26)
-
-See README / SKILL — 12 advertised platforms. LinkedIn, 小红书, Telegram, and Twitch stay as unlisted recipes under `platforms/`. Live file acquire on Anthony’s Mac that day:
-
-| Platform | File acquire |
-| --- | --- |
-| Douyin `7696098282904259850` | `acquire_douyin.py` works repeatedly (~8MB mp4). |
-| YouTube | `yt-dlp` saved a file. Frames and speech are still required for Understanding. |
-| TikTok | Sample was IP-blocked. Not a verified file recipe. |
-| Bilibili | `yt-dlp` HTTP 412. Public playurl not verified. Uploader CC can still be speech. |
-
-## ASR (Alien)
-
-- `py -3.12` + faster-whisper 1.2.1 + ffmpeg 9.0.2 essentials — installed
-- Prefer `py -3.12` over MinGW python for ASR
-- Pin `av>=11,<14` with faster-whisper 1.2.x
-- Dry-run: SAPI speech WAV → ok:true (tiny model)
-
-## Next
-
-- Real speech + frame E2E on a user Reel/视频号/TikTok/Douyin file when Anthony supplies one
-- Douyin `7696098282904259850` auto-acquire is verified on Mac. Re-check if the mobile share page starts showing the in-app wall with no video element.
-- TikTok and Bilibili still need a sample that actually saves a file before any `yt-dlp` or playurl recipe is documented as working.
-- Optional API keys for Graph / Helix / YouTube Data as needed
+- Existing ASR environment `.venv-asr/` preserved.

@@ -1,12 +1,15 @@
 # WeChat 公众号 articles
 
-**Status:** Partial (short-link WebFetch recipe; verification can still block access).
+**v0.5.0 status:** Article body recipe available; current Mac curl attempt on
+2026-10-26 hit `环境异常 / 当前环境异常，完成验证后即可继续访问` with no `#js_content`.
+Historical WebFetch body success below remains historical, not a new pass.
+Evidence: `~/Developer/scr-proof/matrix-2026-10-26/wechat-article/`.
 
 Read the article body, not only the title card. Prefer a trusted host article connector if present; otherwise use the public short-link path below before declaring the article blocked.
 
 ## Video and graphics
 
-The article HTML is the article (`body_kind: article`). An embedded 视频号 is a different object: it needs a local file and [the shared video recipe](_video-body.md) via [wechat-channels.md](wechat-channels.md). Do not describe that embedded video from the article’s title or from a caption. If the article text itself cannot be fetched, ask for a paste. Do not solve a captcha.
+The article HTML is the article (`body_kind: article`). Automatically attempt `acquire_media.py ARTICLE_URL --out-dir DIR` for a public HTML video element. No embedded video file was saved in this run. An embedded 视频号 is a different object: it needs a local file and [the shared video recipe](_video-body.md) via [wechat-channels.md](wechat-channels.md). Do not describe that embedded video from the article’s title or from a caption. If the article text itself cannot be fetched, ask for a paste. Do not solve a captcha.
 
 ## URL patterns
 

@@ -1,48 +1,28 @@
 # Vimeo
 
-**Status:** Works when text tracks or a media file are read. The oEmbed description is not the video.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://vimeo.com/{id}`
-- `https://vimeo.com/{user}/{id}`
-- `https://player.vimeo.com/video/{id}`
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-Text tracks are **speech**. Default video Understanding also needs frames, OCR, and host vision ([_video-body.md](_video-body.md)). The oEmbed description stays in `caption`. If the file and the text track are both missing, say the video was not watched.
-
-## Prefer (in order)
-
-1. **Host Vimeo connector** if it returns text tracks or the media file.
-2. **Official Vimeo API** text tracks when the user has an access token and the video exposes captions (`VIMEO_ACCESS_TOKEN` env). That fills `speech_text` only.
-3. **yt-dlp** when the user asked to read the video, or a file they supplied. Then frames + OCR + host vision + ASR if there is no text track. Stop on password, domain restriction, or login.
-4. **Public oEmbed** for metadata only:
-   `GET https://vimeo.com/api/oembed.json?url=<urlencoded>`
-   Title, author, description → `caption`. Never the body.
-
-## Fetch recipe
-
-1. Extract numeric video id (`normalize_url.py`).
-2. Text tracks or ASR → `speech_text`. Frames → `visual_text` / `visual_description`.
-3. Set `body_kind: media_understanding` only when pictures and speech were both read. Text-track-only is `transcript` with graphics unread.
-4. Summarize from speech + visuals. Flag auto-caption uncertainty. Description stays in `caption`.
-
-## Honest limits
-
-- Private / password / domain-restricted videos need authorization.
-- oEmbed description alone is **not** understanding.
-- Respect Vimeo ToS; no login bypass.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/vimeo.md and platforms/_video-body.md. URL: <URL>
-Speech from text tracks or ASR. Frames for graphics. Description is metadata.
-If acquire fails and there is no text track, say the video was not watched.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://vimeo.com/22439234' --out-dir "$HOME/Media/vimeo"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Vimeo oEmbed: https://developer.vimeo.com/api/oembed
-- Vimeo API text tracks
+**Method:** Public player.vimeo.com URL → yt-dlp. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+The web page for 76979871 required login; its player formats reported DRM and were rejected. Alternate public sample 22439234 saved normally. Preserve an owner-supplied unlisted hash; do not defeat passwords, domain restrictions or DRM.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/vimeo/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

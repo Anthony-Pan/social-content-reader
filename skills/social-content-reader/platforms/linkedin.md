@@ -1,45 +1,28 @@
 # LinkedIn
 
-**Status:** Partial — public post text sometimes available; most deep content needs user paste or an authorized API. Native video needs a media file.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.linkedin.com/posts/{slug}`
-- `https://www.linkedin.com/feed/update/urn:li:activity:{id}`
-- `https://www.linkedin.com/pulse/{slug}` (articles)
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-A pasted or authorized post/article is `body_kind: post_text` or `article`. That text is the post, not a video. Native video follows [_video-body.md](_video-body.md) after the user supplies a file or `yt-dlp` downloads a public URL they asked to read, without a login bypass. If acquire fails, say the video was not watched. An Open Graph title is not Understanding.
-
-## Prefer (in order)
-
-1. **Host LinkedIn connector** with user-authorized OAuth (Marketing / Community Management APIs as licensed).
-2. **User paste** of the post or article (most reliable for agents without OAuth).
-3. **WebFetch** of a *public* post/article URL — only use visible text if the page returns it without login. Many posts redirect to login → stop and ask for paste.
-4. Pulse articles: try public WebFetch; if paywall/login, ask for export/paste.
-5. Video posts: the [media pipeline](_video-body.md) on a local file. The post blurb is `caption`, not the video.
-
-## Fetch recipe
-
-1. Detect posts vs Pulse articles.
-2. Try connector → public page → user paste.
-3. Set `body_kind: post_text` or `article`; `fetch_method` accordingly.
-4. Never claim understanding from an Open Graph title card alone.
-
-## Honest limits
-
-- LinkedIn aggressively login-walls content. Honest default: **ask the user to paste**.
-- No cookie theft, session hijacking, or unofficial scrapers.
-- Official APIs require app review and member authorization — document env names only (`LINKEDIN_ACCESS_TOKEN`), do not commit secrets.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/linkedin.md. URL: <URL>
-If login-walled, return unavailable + ask for paste. Do not bypass auth.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7' --out-dir "$HOME/Media/linkedin"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- LinkedIn Developer docs (Posts / Articles APIs)
+**Method:** Public video data-sources → progressive MP4. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+No OAuth or user browser profile was needed for this public post. Other posts can login-wall. LinkedIn Learning/paywalled courses are not covered by this acquire recipe.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/linkedin/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

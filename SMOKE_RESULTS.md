@@ -1,3 +1,116 @@
+# v0.5.0 acquisition matrix — Mac, 2026-10-26
+
+**Fresh live results:** 13 saved video files across 15 video platforms; 小红书
+and 视频号 did not yield media. 公众号 is an article platform: its current
+article fetch hit verification and embedded video was not acquired. Reddit's
+pass starts with an independently known public CDN media id; its post resolver
+is still blocked. This is a partial all-platform goal, not 16 working fetches.
+
+Proof root: `~/Developer/scr-proof/matrix-2026-10-26/` (including exploratory
+artifacts). `matrix.json` and each platform's `PASS.json` or `FAIL.txt` identify
+the authoritative outcome. `POST-RESOLUTION-FAIL.txt` preserves Reddit's wall.
+The Bilibili `REJECTED-error-placeholder.mp4` is deliberately excluded from
+success; exploratory `player-*` downloads and failed raw tracks are not the
+counted media. Every counted file has a SHA-256 receipt, ffprobe stream/duration
+validation, a decoded proof frame and a full FFmpeg decode with exit 0 and no
+error output. The file names below select the actual evidence.
+
+Environment: macOS arm64, Python 3.15.1, Playwright 1.64.1 / Chromium 156,
+FFmpeg/ffprobe 9.0.2, yt-dlp 2026.10.21. Browser work used a new venv under
+`~/Developer/scr-proof/acquire-venv/`; the pre-existing `.venv-asr/` was preserved.
+No user profile cookies, captcha defeat, private API clients or CDN decrypt.
+No ASR/Understanding was claimed in this acquisition matrix.
+
+| Platform | Actual source / method | Saved file | Bytes | Seconds | Audio | Remaining wall |
+| --- | --- | --- | ---: | ---: | --- | --- |
+| youtube | [watch](https://www.youtube.com/watch?v=jNQXAC9IVRw); yt_dlp | `youtube/youtube_488c5108c18e9ac4.mp4` | 475989 | 19.014 | yes | Public sample only; gated/deleted URLs can still fail. |
+| x | [1577855540407197696](https://x.com/oshtru/status/1577855540407197696); yt_dlp_syndication | `x/x_8500828fc95e473b.mp4` | 893919 | 30.036875 | yes | Public sample only; gated/deleted URLs can still fail. |
+| instagram | [](https://www.instagram.com/reel/Chunk8-jurw/); public_page_media | `instagram/instagram_7a956bbb30f3fa04.mp4` | 918120 | 4.966667 | no | Source reports has_audio=false; visual evidence only. |
+| tiktok | [6718335390845095173](https://www.tiktok.com/@scout2015/video/6718335390845095173); public_page_media | `tiktok/tiktok_d2899f4428fa4c46.mp4` | 2953029 | 10.495011 | yes | Old yt-dlp IP wall bypass not attempted; official player worked. Alternate 7206382937372134662 unavailable. |
+| threads | [DeMqtuYgkaL](https://www.threads.com/@nasa/post/DeMqtuYgkaL); public_page_media | `threads/threads_8f063507f698a30d.mp4` | 11169291 | 89.470708 | yes | Public sample only; gated/deleted URLs can still fail. |
+| reddit | [gyh95hiqc0b11](https://v.redd.it/gyh95hiqc0b11); yt_dlp | `reddit/reddit_5dcd184489f41800.mp4` | 7478923 | 13.7 | no | Known CDN URL only. Post/JSON and redditmedia embed blocked; no automatic arbitrary post resolution. |
+| linkedin | [the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7](https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7); public_page_media | `linkedin/linkedin_496e0813b1cc2178.mp4` | 5316468 | 161.866009 | yes | Public sample only; gated/deleted URLs can still fail. |
+| facebook | [1195289147628387](https://www.facebook.com/reel/1195289147628387); public_page_media | `facebook/facebook_cc12fd22535bfa0d.mp4` | 622802 | 9.566667 | no | Target DASH manifest has video representations only; visual evidence only. |
+| telegram | [402](https://t.me/telegram/402); public_page_media | `telegram/telegram_2604a7144d849a8e.mp4` | 1408169 | 8.0 | yes | Public sample only; gated/deleted URLs can still fail. |
+| vimeo | [22439234](https://vimeo.com/22439234); yt_dlp | `vimeo/vimeo_b7b62529f65a3d07.mp4` | 20561134 | 185.877333 | yes | 76979871 login/DRM rejected; alternate 22439234 saved. |
+| twitch | [FaintLightGullWholeWheat](https://clips.twitch.tv/FaintLightGullWholeWheat); public_page_media | `twitch/twitch_9d3021eae0ac932a.mp4` | 16299328 | 32.099 | yes | Clip verified; long VODs unverified. |
+| douyin | [7696098282904259850](https://www.douyin.com/video/7696098282904259850); douyin_mobile_player | `douyin/douyin_2d5c9591cdc9468a.mp4` | 8382047 | 48.833333 | yes | Public sample only; gated/deleted URLs can still fail. |
+| bilibili | [BV17x411w7KC](https://www.bilibili.com/video/BV17x411w7KC); browser_media_tracks | `bilibili/bilibili_ee02d4fb68da3725.mp4` | 6445696 | 199.319433 | yes | Main/view API HTTP 412. External player works for valid sample. error.mp4 for BV1GJ411x7h7 rejected. |
+| xiaohongshu | [6411cf99000000001300b6d9](https://www.xiaohongshu.com/explore/6411cf99000000001300b6d9); public page attempt | **FAIL** | — | — | — | Two public notes returned IP-risk 300031/300012; stopped. |
+| wechat-channels | [AAZ3p39sQm](https://weixin.qq.com/sph/AAZ3p39sQm); public page attempt | **FAIL** | — | — | — | sph page has caption/QR but no video; no compliant public auto-acquire established. |
+| wechat-article | [Rsa54LdbyhXIHheJYO6gkw](https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw); public page attempt | **FAIL** | — | — | — | Current curl verification page; no js_content; no embedded media. Historical WebFetch body success is not this run. |
+
+## What changed the hard-wall outcomes
+
+- TikTok: [its documented embed player](https://developers.tiktok.com/docs/en/embed-player)
+  `/player/v1/6718335390845095173?autoplay=1` exposed a real video src;
+  same-context GET saved 2,953,029 bytes. No TikTok yt-dlp challenge/app API path
+  was used in this run.
+- Bilibili: main/view API 412 did not describe the public external player.
+  For BV17x411w7KC the external player played normally. Its unencrypted .m4s
+  responses were fetched with the observed Origin/Referer/User-Agent and
+  `Range: bytes=0-`. Complete Content-Range/body coverage was required, then
+  AV1+AAC tracks were muxed locally (6,445,696 bytes, 199.319433 seconds). A
+  simple GET with different request headers returned 567, and a different
+  sample played the site's 17-second error.mp4; neither counts as success.
+- Meta: public HTML carries matching post codes/ids and progressive media
+  URLs. Instagram/Threads match `code` plus `video_versions`; Facebook matches
+  numeric video id plus browser-native URL. Unrelated recommendations are
+  excluded. Instagram's source reports no audio; the selected Facebook source
+  manifest has no audio representation. No claim of acquired speech is made.
+- Telegram: the [public post widget](https://core.telegram.org/widgets/post)
+  isolates message 402. The `/s/` preview returns nearby messages; downloading
+  its first video would give the wrong post.
+- X: yt-dlp explicitly selects public syndication rather than its private
+  GraphQL path. LinkedIn reads public video `data-sources`. Twitch reads the
+  public clip's actual video src. Vimeo uses its public embedded player.
+
+## Remaining walls / researched routes
+
+- 小红书: explore/6411cf99000000001300b6d9 and
+  discovery/item/674051740000000007027a15 (with supplied xsec_token) both
+  returned `安全限制 / IP存在风险`, codes `300031/300012`. No signatures, app
+  APIs, cookie extraction, IP switching or captcha workarounds were attempted.
+- 视频号: sph/AAZ3p39sQm rendered public caption/date and a QR prompt, no
+  video element. Native WeChat availability was inspected, but no reproducible
+  public-link-to-file path was established; no messages or exports were sent.
+  Creator assistant is an authorized-account avenue, not a verified arbitrary
+  video API here. [wx-downloader](https://github.com/QinGeneral/wx-downloader)
+  and [WechatVideoDL](https://github.com/topgptus/WechatVideoDL) were researched,
+  not executed: their Yuanbao/cookie clients are outside a documented public
+  player route. Interception/private API replay/CDN decryption are excluded.
+- Reddit: post URL, JSON via yt-dlp, and redditmedia embed were blocked. The
+  media id `gyh95hiqc0b11` is mapped to post `90bu6w` by the
+  [public yt-dlp test fixture](https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/reddit.py).
+  Its public DASH manifest saved a video-only file. This separate CDN pass
+  must never be advertised as a working arbitrary post resolver.
+- 公众号: current curl of /s/Rsa54LdbyhXIHheJYO6gkw returned `环境异常 /
+  当前环境异常，完成验证后即可继续访问`, not `#js_content`. A host web open also
+  failed. Historical body-reading results below remain historical.
+- Twitch's [official clips download API](https://dev.twitch.tv/docs/api/reference/#get-clips-download)
+  is an additional authorized broadcaster/editor route, researched but not
+  executed without scoped tokens. Long VODs remain unverified.
+
+## Validation and replay
+
+`python3 -B -m unittest discover -s skills/social-content-reader/scripts/tests -q`
+passed **55 tests** on this Mac, including acquisition provenance, placeholder
+rejection, complete ranges, failure cleanup, no-cookie downloader options, and
+the media-first doc contract. All 13 counted files also decoded completely.
+
+```bash
+# Explicit network replay of one sample, using the acquire venv:
+~/Developer/scr-proof/acquire-venv/bin/python -B skills/social-content-reader/scripts/smoke_acquire.py --platform tiktok --proof-dir ~/Developer/scr-proof/recheck
+# --all opts into all 16 sample attempts (公众号 is an embedded video probe).
+```
+
+Receipts committed without media or signed CDN URLs:
+[`acquire-matrix-2026-10-26.json`](skills/social-content-reader/references/acquire-matrix-2026-10-26.json).
+
+---
+
+# Historical smoke results (v0.4.0 and earlier; not current acquisition claims)
+
 # SMOKE_RESULTS — live platform checks
 
 **When:** 2026-10-26 ~07:15–07:17 Asia/Shanghai (CST, UTC+8)  
