@@ -43,6 +43,16 @@ Operational failures return the same keys, `ok: false`, an `error`, and exit cod
 
 ## Windows installation
 
+**Important (Anthony-Alien):** the MinGW `python` on PATH cannot install binary `av` wheels. Use official CPython:
+
+```powershell
+py -3.12 -m pip install faster-whisper
+py -3.12 skills/social-content-reader/scripts/asr_local.py --help
+```
+
+FFmpeg: if `winget` is unavailable, install essentials to `C:\Tools\ffmpeg\...\bin` and add that bin dir to the User PATH (see HARDEN_NOTES.md).
+
+
 Use your chosen Python environment. Install **one** local engine; these commands are setup instructions, not automatically executed by the helper:
 
 ```powershell

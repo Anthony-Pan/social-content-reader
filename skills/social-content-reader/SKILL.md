@@ -2,20 +2,23 @@
 name: social-content-reader
 description: >
   Read and understand social media posts and videos beyond titles/captions.
-  Use when the user pastes a YouTube, X/Twitter, Instagram, WeChat 公众号, or
-  WeChat 视频号 URL or supplies a local audio/video file (or asks what a video/post is about), and the agent needs
-  transcripts, article bodies, or honest limits instead of metadata-only guesses.
-  Prefer an existing platform connector if present; otherwise follow this skill's
-  documented public fetch paths. Windows + Codex CLI is the primary heavy-lift runtime.
+  Use when the user pastes a YouTube, X/Twitter, Instagram, TikTok, Threads,
+  Reddit, LinkedIn, Facebook, Telegram, Vimeo, Twitch, Douyin, Bilibili,
+  Xiaohongshu/RedNote, WeChat 公众号, or WeChat 视频号 URL — or supplies a
+  local audio/video file — and the agent needs transcripts, article/post
+  bodies, or honest limits instead of metadata-only guesses.
+  Prefer an existing platform connector if present; otherwise follow this
+  skill's documented public fetch paths. Windows + Codex CLI is the primary
+  heavy-lift runtime.
 license: MIT
 compatibility: >
-  Cursor / Claude Code / Codex Agent Skills loaders. Network access required for remote fetch/API ASR;
-  local ASR works offline once dependencies and model weights are cached.
-  Prefer host MCP connectors (YouTube, X) when available. Codex CLI recommended
-  on Windows for longer extract/summarize jobs.
+  Cursor / Claude Code / Codex Agent Skills loaders. Network access required
+  for remote fetch/API ASR; local ASR works offline once dependencies and
+  model weights are cached. Prefer host MCP connectors when available.
+  Codex CLI recommended on Windows for longer extract/summarize jobs.
 metadata:
   author: Anthony-Pan
-  version: "0.2.0"
+  version: "0.3.0"
   runtime: windows-codex-first
 ---
 
@@ -27,7 +30,7 @@ Teach the agent to **understand what social content is about** — spoken/writte
 
 - User pastes a social URL and asks “what is this about?”, summarize, quote, translate, or fact-check.
 - A research / content workflow needs the **body** of a video or post.
-- User supplies an Instagram Reel or WeChat 视频号 audio/video file for speech understanding.
+- User supplies local audio/video for speech understanding (esp. IG / TikTok / Douyin / 视频号).
 - A site blocks normal `WebFetch` / browser scrapes and you need a **documented** path or an honest “blocked” answer.
 
 ## When not to use
@@ -39,41 +42,33 @@ Teach the agent to **understand what social content is about** — spoken/writte
 ## Core recipe (always)
 
 1. **Detect platform** from the URL (see [ARCHITECTURE.md](ARCHITECTURE.md)). For a local file, use the user's source context; no URL is required to run ASR.
-2. **Prefer host connector** if the agent runtime already has one:
-   - YouTube research / transcript MCP tools
-   - X / Twitter public read tools
-   - Any user-installed WeChat article MCP
+2. **Prefer host connector** if the agent runtime already has one (YouTube, X, Reddit, etc.).
 3. Else **follow the platform doc** under `platforms/`:
-   - [youtube.md](platforms/youtube.md)
-   - [x.md](platforms/x.md)
-   - [instagram.md](platforms/instagram.md)
-   - [wechat-article.md](platforms/wechat-article.md)
-   - [wechat-channels.md](platforms/wechat-channels.md)
+   - Overseas: [youtube.md](platforms/youtube.md), [x.md](platforms/x.md), [instagram.md](platforms/instagram.md), [tiktok.md](platforms/tiktok.md), [threads.md](platforms/threads.md), [reddit.md](platforms/reddit.md), [linkedin.md](platforms/linkedin.md), [facebook.md](platforms/facebook.md), [telegram.md](platforms/telegram.md), [vimeo.md](platforms/vimeo.md), [twitch.md](platforms/twitch.md)
+   - Chinese: [bilibili.md](platforms/bilibili.md), [douyin.md](platforms/douyin.md), [xiaohongshu.md](platforms/xiaohongshu.md), [wechat-article.md](platforms/wechat-article.md), [wechat-channels.md](platforms/wechat-channels.md)
 4. **Normalize** into a common shape (title, author, published_at, body_text, media_notes, source_url, fetch_method, limits).
-5. **Understand**: summarize claims, topics, and tone from `body_text` (transcript / article). Never pretend a caption equals the video.
+5. **Understand**: summarize claims, topics, and tone from `body_text`. Never pretend a caption equals the video.
 6. **Cite limits**: if you only got metadata, say so. If remote fetch is blocked, use any supplied media with ASR; otherwise ask for a paste/export.
 
 ## ASR pipeline
 
-For Instagram Reels and WeChat 视频号, user-provided media makes speech readable:
+For short-form video platforms (Instagram Reels, TikTok, Douyin, WeChat 视频号, and similar), user-provided media makes speech readable:
 
-1. Prefer a pasted transcript or an authorized host connector that returns real content. Otherwise obtain a user-provided audio/video file through supported share/export/download controls. Only use optional download tools after explicit approval for the particular URL; see [Instagram](platforms/instagram.md).
+1. Prefer a pasted transcript or an authorized host connector. Otherwise obtain a user-provided audio/video file through supported share/export/download controls. Optional download tools only after explicit approval for that URL.
 2. Run [scripts/asr_local.py](scripts/asr_local.py):
 
    ```powershell
    python skills/social-content-reader/scripts/asr_local.py --media "C:\Media\video.mp4" --language auto --backend auto --model base
    ```
 
-   This example runs from the repo root; for installed skills, find `scripts/asr_local.py` relative to this `SKILL.md`.
-3. Backend preference is `faster-whisper` → `openai-whisper` → OpenAI Whisper API (`OPENAI_API_KEY` + `openai` SDK). Prefer local ASR. Confirm that sending media to the API is within user authorization before using API/auto with a configured key; a key alone is not upload permission. Pin a local backend when uploads are not authorized. Local model weights may download on first use; runtime failure does not fall back to cloud.
-4. Require exit code 0, `ok: true`, and nonempty `text`; map `text` to `body_text`, `body_kind: transcript`, `fetch_method: user_media_asr`. Preserve source URL when available, language, backend/model, and speech/visual limitations. On failure, report `error` and setup instructions, with speech still unavailable.
-5. Summarize or answer from the transcript. ASR does not read silent visuals; use user-provided screenshots/text or an authorized vision tool when needed.
+   Resolve the helper relative to this `SKILL.md` when installed elsewhere.
+3. Backend preference: `faster-whisper` → `openai-whisper` → OpenAI Whisper API (`OPENAI_API_KEY`). Prefer local ASR. Confirm API upload authorization before cloud; pin a local backend when uploads are not authorized.
+4. Require exit code 0, `ok: true`, and nonempty `text`; map to `body_text` / `body_kind: transcript` / `fetch_method: user_media_asr`.
+5. Summarize from the transcript. ASR does not read silent visuals.
 
-See [scripts/README.md](scripts/README.md) for Windows installs, file conversion, API upload limits, and JSON details. No downloader, platform scraper, third-party transcript service, or creator API client is bundled.
+See [scripts/README.md](scripts/README.md). No downloader or login bypass is bundled.
 
 ## Windows + Codex heavy lift
-
-When the host agent is thin on network tools, or the job is long (full video transcript + structured notes), run Codex in the local Windows clone of this repo:
 
 ```powershell
 cd C:\Users\<you>\source\repos\social-content-reader
@@ -86,8 +81,6 @@ codex exec --full-auto "Use skills/social-content-reader: fetch and understand <
 
 ## Output contract
 
-Return (to the user or parent agent):
-
 1. **Normalized record** (JSON or compact bullets): platform, url, title, author, body_text (or excerpt + “full length N”), fetch_method, confidence, limits.
 2. **Understanding**: 5–12 lines on what the content argues / shows / teaches.
 3. **Gaps**: what you could not read (media, truncated text, captcha, ToS).
@@ -96,18 +89,35 @@ Return (to the user or parent agent):
 
 - No credential theft, cookie dumping, login bypass, captcha defeat, or unofficial private API scrapers.
 - Prefer public APIs, oEmbed, official transcripts, and user-authorized sessions.
-- Instagram oEmbed: embed/preview only — do not claim full “content understanding” from oEmbed alone.
-- Instagram Reel and WeChat 视频号 speech **are readable when the user supplies media + ASR**; do not declare the whole platform unreadable because remote URL fetch failed.
-- WeChat 视频号 remote URL-only consumer fetch remains blocked; use user media/text or authorized official creator capabilities.
-- Optional download tools require explicit user approval for that URL. API ASR uploads require user authorization; keep credentials in environment/OS secret store only.
+- Caption/oEmbed-only is **not** full video understanding — say so.
+- User-media + ASR is a first-class path when remote speech fetch is blocked.
+- Optional download tools require explicit user approval for that URL.
 - Always prefer connector-if-present over brittle scrapers.
 
 ## Quick platform matrix
 
+### Overseas / global
+
 | Platform | Status | Prefer |
 | --- | --- | --- |
-| YouTube | Works | Host YouTube connector → transcript path |
-| X/Twitter | Partial | Host X connector → `publish.x.com/oembed` |
-| Instagram | Works with user media + ASR (oEmbed meta-only) | User transcript → user media + ASR; optional approved download / owned-account Graph API |
-| WeChat 公众号 | Partial (short-link WebFetch recipe) | Connector → short `/s/<id>` WebFetch/curl + browser-like UA; bounded retries; user action on verification |
-| WeChat 视频号 | Works with user media + ASR (remote fetch blocked) | User file or pasted text → ASR → `body_text`; official creator APIs only within account scope |
+| YouTube | ✅ Works | Host YouTube connector → transcript / captions |
+| X/Twitter | ✅ Partial | Host X connector → `publish.x.com/oembed` |
+| Instagram | Works with user media + ASR (oEmbed meta-only) | User paste/media → ASR; optional approved download / Graph |
+| TikTok | Partial (oEmbed caption; speech via ASR) | oEmbed caption → user media + ASR |
+| Threads | Partial | oEmbed / public page → paste → ASR for video |
+| Reddit | ✅ Works (public) | Host connector → `.json` append |
+| LinkedIn | Partial (often login-walled) | Authorized API → **user paste** |
+| Facebook | Partial | Graph API / oEmbed → paste → ASR for Reels |
+| Telegram | Partial (public channels) | `t.me/s/` preview → bot API → paste |
+| Vimeo | ✅ Works (when captions exist) | oEmbed + text tracks → ASR fallback |
+| Twitch | Partial (VOD/clip speech via ASR) | Helix metadata → user media + ASR (chunk long VODs) |
+
+### Chinese
+
+| Platform | Status | Prefer |
+| --- | --- | --- |
+| Bilibili | ✅ Works (CC often available) | View API + subtitles → ASR fallback |
+| Douyin 抖音 | Partial | Share caption → **user media + ASR** |
+| 小红书 / RedNote | Partial (often app/login-walled) | **User paste** → ASR for video notes |
+| WeChat 公众号 | Partial (short-link WebFetch) | Connector → `/s/<id>` WebFetch/curl |
+| WeChat 视频号 | Works with user media + ASR (remote blocked) | User file/text → ASR |

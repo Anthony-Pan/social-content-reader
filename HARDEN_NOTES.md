@@ -1,3 +1,44 @@
+# social-content-reader v0.3.0 hardening notes
+
+Updated 2026-10-26 ~15:35 Asia/Shanghai.
+
+## ASR install on Anthony-Alien (completed)
+
+| Item | Result |
+| --- | --- |
+| Python for ASR | **Official CPython 3.12** via `py -3.12` (`C:\Users\aw\AppData\Local\Programs\Python\Python312\python.exe`) |
+| MinGW `python` on PATH | **Cannot** install `av` wheels (`--only-binary` → none). Do not use for faster-whisper. |
+| `faster-whisper` | **1.2.1** installed for py3.12 (with `av` 19.0.2 wheels) |
+| FFmpeg | **9.0.2 essentials** at `C:\Tools\ffmpeg\ffmpeg-9.0.2-essentials_build\bin\ffmpeg.exe` (User PATH updated). `winget` was not usable in the agent shell; zip install from gyan.dev used instead. |
+| `asr_local.py --help` | OK under `py -3.12` |
+| Tiny dry-run | See smoke section below / STATUS.md |
+
+Invoke ASR with:
+
+```powershell
+py -3.12 skills\social-content-reader\scripts\asr_local.py --media <file> --language auto --backend faster-whisper --model base
+```
+
+## v0.3 platform expansion
+
+Added honest recipes (connector → public API/oEmbed/CC → user paste → user-media ASR):
+
+**Overseas:** TikTok, Threads, Reddit, LinkedIn, Facebook, Telegram public, Vimeo, Twitch VODs/clips  
+**Chinese:** Douyin, Bilibili, 小红书/RedNote  
+**Existing hardened docs kept:** YouTube, X, Instagram, 公众号, 视频号
+
+Also updated: `normalize_url.py` detect table, `SKILL.md` / `README.md` / `ARCHITECTURE.md` matrices (overseas first-class), `INSTALL_OWN.md`.
+
+## Still weak / needs Anthony
+
+- LinkedIn / 小红书 / many Facebook personal posts: paste or OAuth
+- Douyin / 视频号 / IG Reels speech: user media file (remote blocked)
+- Twitch long VODs: chunking time/disk; Helix tokens if metadata wanted (`TWITCH_CLIENT_ID` / `TWITCH_ACCESS_TOKEN`)
+- Optional: `OPENAI_API_KEY` for API ASR fallback; `YOUTUBE_API_KEY` / Meta Graph tokens as licensed
+- First Whisper model download on Alien may take time/disk on first real speech file
+
+---
+
 # social-content-reader v0.2.0 hardening notes
 
 Implemented 2026-10-26 in the Windows repository. Changes are uncommitted; no commit, push, platform login, media download, or paid transcription call was performed. The pre-existing untracked `_codex_brief_v02.txt` was preserved.

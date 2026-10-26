@@ -1,0 +1,5 @@
+
+# local ASR smoke artifacts
+_tmp_asr_smoke.*
+*.wav
+!skills/**/fixtures/*.wav
