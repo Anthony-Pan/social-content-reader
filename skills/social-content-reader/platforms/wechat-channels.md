@@ -1,43 +1,43 @@
 # WeChat 视频号 (Channels)
 
-**Status:** ❌ Blocked for general third-party agents
+**Status:** Works with user media + ASR (remote URL-only fetch blocked).
 
-**Goal:** Do not pretend arbitrary 视频号 videos are readable. Document reality.
+## URL patterns and observed network limit
 
-## URL patterns
+- `channels.weixin.qq.com` share links and in-app 视频号 cards.
+- The repository's [earlier network smoke](../../../SMOKE_RESULTS.md) got a homepage shell and feed response `errCode: 10012`, `errMsg: Illegal request`. These contain no video body/transcript. Treat remote URL-only fetching as blocked; do not keep probing undocumented endpoints.
 
-- `channels.weixin.qq.com` share links
-- In-app 视频号 shares (often not useful outside WeChat)
+## Primary path: user text or saved/exported video
 
-## What exists officially
+Prefer an existing authorized host connector if it actually returns a transcript or permitted media. Otherwise:
 
-WeChat documents **视频号助手** server APIs for **authorized creators / merchants** (access_token, showcase, leads, livestream data, etc.). These are **not** a public consumer API to fetch any channel’s video bytes or transcripts.
+1. Accept a pasted transcript/on-screen text. Store supplied speech in `body_text`, `body_kind: transcript`, `fetch_method: user_paste`; label caption-only material accordingly.
+2. If speech understanding is needed, ask the user to share/export/save an **actual video/audio file** using supported WeChat/creator controls or an authorized browser workflow. A share card, bookmark, or article containing a 视频号 embed is not a media file. If no export is offered, ask for text or a user-provided authorized copy; do not introduce unofficial downloaders.
+3. Run ASR on the local file:
 
-There is **no** honest, general-purpose “paste any 视频号 link → full transcript” path comparable to YouTube captions for third-party agents.
+   ```powershell
+   python skills/social-content-reader/scripts/asr_local.py --media "C:\Media\channels.mp4" --language zh --backend auto --model base
+   ```
 
-## Prefer (in order)
+   Resolve the helper relative to `SKILL.md` when installed elsewhere. Use `--language auto` for unknown speech language. See [setup and backend behavior](../scripts/README.md).
+4. Check exit code and `ok`. On success, copy JSON `text` into `body_text`, set `body_kind: transcript`, `fetch_method: user_media_asr`, and record backend/model/language plus speech-only limitations in `media_notes`/`limits`. Keep the original share URL when known; do not invent one for a file-only request.
+5. Summarize, translate, or answer from the transcript. ASR is speech evidence; it does not establish visual details or guarantee perfect names/numbers. Request screenshots or pasted on-screen text for silent content.
 
-1. **User paste**: transcript, on-screen text, or summary they typed.
-2. **Creator-owned APIs** if the user owns the channel and has 视频号助手 credentials (out of band; never store secrets in this repo).
-3. If the video is also published on YouTube / X, use those platform recipes instead.
-4. Otherwise: **blocked** — explain and stop.
+If only the remote URL is available, return `fetch_method: blocked`, `body_kind: unavailable`, empty `body_text`, and ask for a file or text. When the user supplies media, switch to ASR instead of continuing to report a platform-wide block.
 
-## Fetch recipe
+## Creator 视频号助手 APIs (documentation only)
 
-1. Detect 视频号 URL / mention.
-2. Immediately set `fetch_method: blocked`, `body_kind: unavailable`.
-3. Ask the user for: pasted text, export, or another platform mirror.
-4. Do **not** document login bypass, reverse-engineering of encrypted media streams, or unofficial downloaders.
+Official creator/merchant capabilities require account authorization and capability-specific access; they do not provide a general consumer API for arbitrary 视频号 speech. Consult the user's applicable [official WeChat documentation](https://developers.weixin.qq.com/) and enabled capabilities.
 
-## Honest limits
+Suggested environment names for a separate creator integration:
 
-- No public oEmbed-style consumer read for arbitrary channel posts (as of skill research, 2026-10).
-- Official APIs require AppID/AppSecret, capability enablement, often IP allowlists — and cover operator analytics/commerce, not “read this viral video’s speech for my homework agent.”
-- Embedded 视频号 cards inside 公众号 articles usually won’t yield playable/transcript content to agents.
+- `WECHAT_CHANNELS_APP_ID`
+- `WECHAT_CHANNELS_APP_SECRET`
+- `WECHAT_CHANNELS_ACCESS_TOKEN`
+- `WECHAT_CHANNELS_CREATOR_ID` (only if required by that capability)
 
-## Codex prompt sketch
+Names only: never commit or echo secrets. These are integration conventions, not implemented API coverage and not inputs to `asr_local.py`. Do not promise media/transcript retrieval unless the specific official authorized capability supports it. A user-provided cross-post/mirror URL can also use its platform recipe.
 
-```text
-Follow platforms/wechat-channels.md. URL: <URL>
-Return blocked ContentRecord + clear user ask (paste transcript or provide mirror URL). No scrape/bypass attempts.
-```
+## Hard limits
+
+No login bypass, captcha defeat, cookie dumping/theft, private API scrapers, or reverse-engineering encrypted streams. Do not treat remote fetch failure as proof that a user-provided video cannot be understood. Local ASR is preferred; API ASR uploads require user authorization as described in the ASR pipeline.

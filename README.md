@@ -2,6 +2,8 @@
 
 **Public Agent Skill** that teaches AI agents how to **read and understand** social media content — transcripts, article bodies, OCR’d captions — not just titles and descriptions.
 
+Version **0.2.0** adds local/API ASR for user-provided Instagram Reels and WeChat 视频号 media.
+
 Most social sites block or frustrate agents. This skill gives a reusable recipe: detect the platform → prefer an existing connector → fall back to a documented public path → normalize → summarize what the content is *about*.
 
 > **Runtime target:** Windows-first local workspace + [Codex CLI](https://github.com/openai/codex) for heavy extractors. Works with Cursor / Claude Code / Codex skill loaders via the [Agent Skills](https://agentskills.io) format.
@@ -78,11 +80,25 @@ Match Codex model/effort to the task (short posts → lighter; long videos / WeC
 | --- | --- | --- | --- |
 | **YouTube** | ✅ Works | Full transcript (+ metadata) | Prefer host YouTube connector / transcript MCP; else Data API metadata + caption/transcript path. Description alone is **not** enough. |
 | **X / Twitter** | ✅ Partial | Post text (public) | Prefer host X connector. Zero-auth: `publish.x.com/oembed`. Long posts may truncate; media/threads need API or connector. |
-| **Instagram** | ⚠️ Partial / blocked for “understand” | Embed HTML + limited metadata | Tokenless oEmbed exists for **embedding** public posts. Meta forbids using oEmbed content for analytics/extraction beyond front-end view. Reels spoken content / Stories: **not** agent-readable without user-provided media + ASR. Be honest. |
-| **WeChat 公众号** | ⚠️ Partial | Article body (public short links) | Public `mp.weixin.qq.com/s/...` often fetchable; long `__biz=` links and captcha walls common. Prefer user-attended browser or dedicated WeChat-article tools; never bypass login. |
-| **WeChat 视频号** | ❌ Blocked for general agents | Creator APIs only (own account) | No public consumer API to fetch arbitrary channel videos/transcripts. Document limits; ask user to paste transcript or export. |
+| **Instagram** | Works with user media + ASR (oEmbed meta-only) | Reel speech from a user transcript or actual media file | Prefer user paste/export/download → ASR. yt-dlp requires explicit approval for that URL; Graph API is limited to authorized Business/Creator accounts. oEmbed is embed/preview only. |
+| **WeChat 公众号** | Partial (short-link WebFetch recipe) | Public article body when accessible | Prefer trusted connector, then short `/s/<id>` WebFetch/curl with browser-like UA and bounded retries. Verification requires user action/paste/export. |
+| **WeChat 视频号** | Works with user media + ASR (remote fetch blocked) | Speech from a user-supplied file or transcript | URL-only fetch remains blocked (`errCode 10012` observed). Supported user share/export/save → ASR → `body_text`; creator APIs require authorized account scope. |
 
 See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
+
+## ASR pipeline
+
+Instagram Reels and WeChat 视频号 speech **are readable when the user supplies a media file**. Obtain a pasted transcript or an actual audio/video export through supported user controls, then run:
+
+```powershell
+python skills/social-content-reader/scripts/asr_local.py --media "C:\Media\video.mp4" --language auto --backend auto --model base
+```
+
+[asr_local.py](skills/social-content-reader/scripts/asr_local.py) prefers faster-whisper, then openai-whisper, then OpenAI Whisper API via `OPENAI_API_KEY` and the `openai` SDK. Local models default to `base`; the API uses `whisper-1`. Confirm API upload authorization before auto can select the API; pin `--backend faster-whisper` or `--backend openai-whisper` for local-only processing. A configured key alone does not authorize uploads.
+
+Require exit code 0 and JSON `ok: true`; map `text` to normalized `body_text`, `body_kind: transcript`, `fetch_method: user_media_asr`. Summarize speech and state any visual gaps. No download tool or platform login is built into the helper. Model weights may download on the first local run.
+
+Windows installation, conversion examples, API limits and error behavior: [scripts/README.md](skills/social-content-reader/scripts/README.md). Release changes and smoke checklist: [HARDEN_NOTES.md](HARDEN_NOTES.md).
 
 ## Architecture (one line)
 
@@ -93,7 +109,9 @@ Details: [`skills/social-content-reader/ARCHITECTURE.md`](skills/social-content-
 ## Legal / ToS honesty
 
 - Prefer **official APIs**, **oEmbed**, **public transcripts**, and **user-authorized connectors**.
-- Do **not** use this skill to steal credentials, bypass logins, defeat captchas, or scrape behind auth walls.
+- Do **not** steal credentials/cookies, bypass logins, defeat captchas, or use unofficial private API scrapers.
+- Use optional download tools only with explicit user approval for that URL; use environment/OS secret storage for API keys and tokens.
+- User-provided IG/视频号 media can be transcribed even when remote fetching is blocked. Obtain authorization before sending media to API ASR.
 - Respect each platform’s Terms of Service and copyright. oEmbed endpoints are often **for embedding**, not for bulk analysis — follow each platform doc’s allowed use.
 - When a platform cannot be read honestly, **say so** and ask the user for a paste / export / authenticated connector.
 
@@ -104,6 +122,7 @@ social-content-reader/
   README.md
   LICENSE
   STATUS.md
+  HARDEN_NOTES.md
   skills/social-content-reader/
     SKILL.md
     ARCHITECTURE.md
@@ -115,6 +134,7 @@ social-content-reader/
       wechat-channels.md
     scripts/
       normalize_url.py
+      asr_local.py
     references/
       inspiration.md
 ```

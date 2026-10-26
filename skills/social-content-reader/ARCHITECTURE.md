@@ -54,13 +54,15 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
   "body_text": "full transcript or article body",
   "body_kind": "transcript|article|post_text|caption_only|unavailable",
   "media_notes": "has video; transcript from captions",
-  "fetch_method": "host_connector|oembed|public_api|user_paste|blocked",
+  "fetch_method": "host_connector|oembed|public_api|public_webfetch|public_curl|user_paste|user_export|user_media_asr|blocked",
   "confidence": "high|medium|low",
   "limits": ["..."]
 }
 ```
 
 ## Path priority (every platform)
+
+For user-supplied files, run the [ASR pipeline](SKILL.md#asr-pipeline) directly; a working remote URL is not required. Instagram/视频号 speech can be understood this way even when remote fetching is blocked. A successful ASR record uses `body_kind: transcript`, copies ASR `text` into `body_text`, and records backend/model/language in `media_notes`. Platform-specific ordering takes precedence over the generic list below.
 
 1. **Host connector / MCP** already attached to the agent (best).
 2. **Official public API or oEmbed** documented by the platform.
