@@ -67,11 +67,8 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | **TikTok** | ✅ Works | Caption via oEmbed | Understand from the caption. ASR is optional. |
 | **Threads** | ✅ Works when post text exists | Public post text | oEmbed / public page → understand. Login walls stay unavailable. |
 | **Reddit** | ✅ Works | OP selftext (+ optional comments) | Public `.json` append or host connector. |
-| **LinkedIn** | Partial (deferred) | Post/article when authorized or pasted | Often login-walled — paste is honest default. Unchanged this release. |
 | **Facebook** | ✅ Works when public text exists | Page post or Reel caption via Graph/oEmbed | Personal posts usually unavailable. ASR optional for spoken Reels. |
-| **Telegram** | Partial | Public channel posts via `t.me/s/` | Private chats need bot membership or export. |
 | **Vimeo** | ✅ Works | Captions/text tracks when present | oEmbed description ≠ transcript. |
-| **Twitch** | Partial | VOD/clip speech via ASR | Helix for metadata; chunk long VODs. |
 
 ### Chinese
 
@@ -79,11 +76,12 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | --- | --- | --- | --- |
 | **Bilibili** | ✅ Works | Uploader CC / subtitles often | View API + player subtitles; else ASR. |
 | **Douyin 抖音** | ✅ Works when a share caption exists | Share-page caption | WebFetch caption → understand. Empty/verification pages stay blocked. ASR optional. |
-| **小红书 / RedNote** | Partial (deferred) | Note text via paste (best) | App/login walls common. Unchanged this release. |
 | **WeChat 公众号** | Partial | Article body on short `/s/<id>` links | Verification → user paste. |
 | **WeChat 视频号** | ✅ Works | What the video is about, from the sph share caption | WebFetch `weixin.qq.com/sph/<id>` → caption → Understanding. Example: `AAZ3p39sQm` (Codex token waste; brainstorm in ChatGPT first). ASR optional. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`). |
 
 See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
+
+Platform recipes for LinkedIn / 小红书 / Telegram / Twitch still exist under platforms/ but are not listed as supported.
 
 ## ASR pipeline
 
@@ -129,8 +127,7 @@ social-content-reader/
     SKILL.md
     ARCHITECTURE.md
     platforms/          # youtube, x, instagram, tiktok, threads, reddit,
-                        # linkedin, facebook, telegram, vimeo, twitch,
-                        # bilibili, douyin, xiaohongshu, wechat-*
+                        # facebook, vimeo, bilibili, douyin, wechat-*
     scripts/
       normalize_url.py
       asr_local.py

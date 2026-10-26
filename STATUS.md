@@ -28,7 +28,7 @@
 
 ## Matrix (honest)
 
-See README / SKILL — 16 platforms. Overseas majors are first-class alongside Chinese.
+See README — 12 supported platforms. LinkedIn / 小红书 / Telegram / Twitch recipes still exist under `platforms/` but are not listed as supported.
 
 ## ASR (Alien)
 
