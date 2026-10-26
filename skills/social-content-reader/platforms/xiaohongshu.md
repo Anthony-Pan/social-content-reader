@@ -1,42 +1,28 @@
-# 小红书 / RedNote (Xiaohongshu)
+# 小红书 / Xiaohongshu
 
-**Status:** Partial. Note text is most reliable via user paste. Video notes and image graphics need media. Remote deep-read is often login-walled.
+**v0.5.0 status:** Documented automatic attempt; blocked on this Mac. **Mac 2026-10-26: NO; risk wall.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.xiaohongshu.com/explore/{id}`
-- `https://www.xiaohongshu.com/discovery/item/{id}`
-- `https://xhslink.com/{short}` (resolve redirects)
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-The note body is the written post (`body_kind: post_text`) when a paste or a public fetch actually returns it. A title card or share caption is not the note and not a video. Video notes follow [_video-body.md](_video-body.md) on a user-exported file (or `yt-dlp` only when that public URL downloads without a login bypass): frames, OCR, host vision, ASR with `--language zh`. Image notes: run `ocr_frames.py` and the host vision tool on the images the user supplied. If the pictures or the video were not acquired, say so. Do not describe unseen graphics from the title.
-
-## Prefer (in order)
-
-1. Host Xiaohongshu connector if the user installed an authorized one that returns the note body or the media file.
-2. **User paste** of the note text (most reliable for the written post).
-3. Resolve short links; one public WebFetch of the note URL — use the note body only if it is returned without login.
-4. Images: user screenshots or saved images → `ocr_frames.py` and host vision.
-5. Video notes: local file → the [media pipeline](_video-body.md).
-
-## Fetch recipe
-
-1. Canonicalize to explore/item id when possible.
-2. Prefer paste/connector over brittle HTML.
-3. Set `body_kind: post_text` for a real note body; `media_understanding` after a video/image read; `unavailable` for a title-only card.
-4. Understanding of a video or image note comes from the media. A share card is `caption` only.
-
-## Honest limits
-
-- 小红书 commonly forces app/login for full content. Honest default: **ask the user to paste**.
-- No captcha defeat, app API reverse-engineering, or cookie theft.
-- Shopping / live modules are out of scope unless text is pasted.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/xiaohongshu.md and platforms/_video-body.md. URL: <URL>
-Paste or connector for the note text. Video and images need a local file.
-A title card is not Understanding. If acquire fails, say so.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.xiaohongshu.com/explore/6411cf99000000001300b6d9' --out-dir "$HOME/Media/xiaohongshu"
 ```
+
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
+
+**Method:** Public note page → playing video src (attempted). The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+Both this sample and discovery/item/674051740000000007027a15 (with its supplied xsec_token) returned 安全限制, IP存在风险, 300031/300012. No compliant saved file on this Mac. Keep supplied share query parameters; do not generate signatures, rotate IPs or call private app APIs.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/xiaohongshu/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

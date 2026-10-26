@@ -1,61 +1,30 @@
-# TikTok (global)
+# TikTok
 
-**Status:** Media required for video Understanding. oEmbed caption is metadata only. Mac, 2026-10-26: `yt-dlp` for the sample tried from Anthony’s network was **IP-blocked**. That is not a verified TikTok file recipe.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-**Goal:** Read what the clip shows and what is spoken. Follow [the shared video recipe](_video-body.md).
+## Automatic acquire first
 
-## URL patterns
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-- `https://www.tiktok.com/@{user}/video/{id}`
-- `https://www.tiktok.com/t/{short}` (resolve redirects first)
-- `https://vm.tiktok.com/{short}` (resolve redirects)
-- Regional hosts that redirect to `tiktok.com` video pages
-
-## Video and graphics
-
-Default success is a local file run through frames, OCR, host vision, and ASR ([_video-body.md](_video-body.md)). The oEmbed caption may be stored in `caption`. It is not Understanding. If acquire fails, say the video was not watched.
-
-## Prefer (in order)
-
-1. A file the user already saved from TikTok.
-2. **yt-dlp** only after a download of **this** URL actually returns a video file. Do not assume it works. The 2026-10-26 Mac sample was IP-blocked from that network. Stop on login, captcha, region block, or IP block and say the file was not acquired.
-   `yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<tiktok url>"`
-3. Host TikTok connector when it returns the media file or a real transcript (not a caption alone).
-4. Frames + OCR + host vision + ASR on the local file:
-
-   ```bash
-   python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/tiktok.mp4" --mode fps --fps 1 --max-frames 24
-   python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
-   python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/tiktok.mp4" --language auto --backend auto --model base
-   ```
-
-   Windows: `py -3.12` and `C:\Media\tiktok.mp4`.
-5. Public oEmbed for **metadata only**:
-   `GET https://www.tiktok.com/oembed?url=<urlencoded video url>`
-   Author, caption, thumbnail → `caption` / `fetch_method: oembed`. Never `body_kind: media_understanding`.
-
-## Fetch recipe
-
-1. Normalize to a canonical `tiktok.com/@…/video/{id}` URL when possible (`normalize_url.py`).
-2. Acquire the file (user save or yt-dlp). Then run the media pipeline.
-3. Set `body_kind: media_understanding` and `fetch_method: media_pipeline` when pictures and speech were both read. Use `transcript` or `visual` with a limit when only one side was read.
-4. If there is no file, set `body_kind: unavailable` and `fetch_method: acquire_failed`. Keep oEmbed text in `caption` if it was fetched.
-
-## Honest limits
-
-- oEmbed is not a watched video. Do not invent dialogue or on-screen graphics from a caption.
-- Private, region-blocked, or deleted videos → unavailable.
-- No login bypass, captcha defeat, cookie theft, or unofficial private API scrapers.
-- TikTok ToS restricts automated bulk access. One yt-dlp acquire the user asked for, or a user-saved file, is the path. Do not bulk-scrape.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/tiktok.md and platforms/_video-body.md. URL: <URL>
-Acquire the mp4, then frames + OCR + vision + ASR.
-oEmbed caption is a side note. If acquire fails, say the video was not watched.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.tiktok.com/@scout2015/video/6718335390845095173' --out-dir "$HOME/Media/tiktok"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- TikTok oEmbed (embed metadata, not the video body): https://developers.tiktok.com/doc/embed-videos
+**Method:** Documented /player/v1/{id} → video src. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+The old yt-dlp failure is historical. This official player sample saved 2,953,029 bytes. An alternate post 7206382937372134662 was unavailable. No mobile app API, challenge solver, or IP rotation.
+
+Official player reference: https://developers.tiktok.com/docs/en/embed-player
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/tiktok/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

@@ -48,45 +48,63 @@ Use this recipe from every platform doc when the user asks what a video shows or
 
 ## Acquire
 
-Prefer a file the user already has (app Save/Download/export, screen recording they made, camera roll). When the user asked to **read the video**, the documented public CLI **yt-dlp** is an allowed way to acquire a local file only where a run has actually saved one. Mac, 2026-10-26: YouTube `yt-dlp` saved a file; the TikTok sample was IP-blocked; Bilibili `yt-dlp` returned HTTP 412 and public playurl is not a verified file recipe. Do not claim those last two until a sample saves a video. Example:
+Automatic acquisition is the default. Prefer an available authorized connector
+that supplies actual media; otherwise run the platform's documented public path:
 
 ```bash
-yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<video url>"
+python3 skills/social-content-reader/scripts/acquire_media.py '<public video URL>' --out-dir "$HOME/Media/acquired"
 ```
 
-Stop if yt-dlp hits a login wall, captcha, or DRM. Do not add cookie theft, captcha defeat, CDN decryption, or private undocumented API clients. Other optional download tools, when ToS-sensitive, still need explicit user approval **for that URL**.
+Install Playwright Chromium in a venv for browser paths; ffmpeg and ffprobe are
+required for file validation. yt-dlp is used for YouTube, public X syndication,
+Vimeo's public player and a supplied public Reddit CDN media URL. See
+[script setup](../scripts/README.md). Ordinary redirect resolution is automatic
+agent work, not a reason to request a user export. Preserve owner-supplied
+access parameters such as Vimeo `h` and Xiaohongshu `xsec_token`.
 
-**Browser cookies:** only when the user wants yt-dlp to use **their own** already-logged-in browser on their machine (`--cookies-from-browser`) because the web player actually plays. Do not export those cookies into the repo, the chat log, or another machine. If playback still does not start, cookies did not unlock it — stop.
+A download succeeds only when the helper returns exit 0 and `ok: true`, with
+`path`, SHA-256, size, positive duration and a video stream. The JSON receipt is
+saved beside the file. Check `has_audio` before claiming speech. A video-only
+file is visual evidence; a transcript-only response is speech evidence. Neither
+alone establishes both. An HTTP 200, caption, thumbnail, or playable site error
+video is not the requested media. The helper rejects Bilibili error.mp4 and
+partial HTTP ranges (HTTP 206 requires Content-Range and actual bytes to cover the entire file), and matches Meta post IDs rather than taking a neighbor's
+video. Bilibili video/audio are downloaded from requests made by the actual
+public external player and muxed without re-encoding or decryption.
 
-**Browser capture:** when a normal page load actually plays the video, save that playing media. Playwright (or any browser tool) is only a way to hold a page that is already playing. It is not a way through an in-app wall.
+No browser profile/cookie extraction (including `--cookies-from-browser`),
+private API client, signed-request fabrication, captcha defeat, login bypass,
+certificate interception or CDN decrypt is part of these recipes. Fresh contexts
+may retain only cookies issued by their own ordinary public page loads. Stop
+on an access challenge; do not rotate IPs or repeatedly retry a risk wall.
 
-### Per platform (honest)
+When the documented automatic route really fails, record the error and return
+`body_kind: unavailable` / `fetch_method: acquire_failed` or `blocked`. A
+configured authorized media connector / official account integration can be
+tried next. User export is last resort after those available automatic paths
+fail. Say the video was not watched; never fill the gap with a caption.
 
-| Platform | What usually yields a file | When acquire is blocked |
+## Mac acquisition matrix — 2026-10-26
+
+All 16 platforms have recipes. **Listed support does not mean every URL is
+accessible.** Verified sample files, byte counts and hashes are in
+[SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); remaining walls are explicit.
+
+| Platform | Automatic method | Actual sample result |
 | --- | --- | --- |
-| YouTube | Host connector media or transcript; `yt-dlp` for the file when the user asked to read the video. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file on Anthony’s network. Official captions cover **speech**; frames still required for graphics. The file alone is not Understanding. | Private, members-only, age-gated, DRM. Description is not the body. |
-| TikTok | A file the user already has, or in-app Save/download. `yt-dlp` only after **this** URL returns a video file. Mac, 2026-10-26: the sample tried from Anthony’s network was IP-blocked. That is not a verified file recipe. | Login, region, IP block, or deleted videos. oEmbed caption is not the body. |
-| Instagram | In-app Share → Download/Save when offered; `yt-dlp` when the user asked to read that Reel and the download works without a login bypass. | Login/captcha. Stop. oEmbed HTML is not the Reel. |
-| Douyin 抖音 | **Default:** `scripts/acquire_douyin.py`. Playwright Chromium (mobile UA) opens `https://www.douyin.com/` for cookies, then `https://m.douyin.com/share/video/{id}`, reads `<video>.src` / `currentSrc` (`https://m.douyin.com/aweme/v1/playwm/?…`), and GETs that URL with the same browser and the share page as Referer. The response is a CDN mp4 written as `{out-dir}/douyin_{aweme_id}.mp4`. No user export first. Mac, 2026-10-26: aweme `7696098282904259850` from `https://v.douyin.com/2qulGbSTiRI/` re-downloaded repeatedly (~8MB). | iesdouyin often shows 「请尝试在抖音内观看」 and is not the player. If the **mobile** share page has no `<video>` src, acquire failed. User export is only that fallback. Caption is not the video. |
-| WeChat 视频号 | User Save/export from WeChat or a file they already have. | No general public file URL. `channels.weixin.qq.com` feed `errCode 10012`. sph WebFetch caption is not the video. |
-| Bilibili | Public CC for speech when the subtitle API returns cues. Graphics need a real file. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. `desc` is not speech. | 大会员, region lock, paywall, HTTP 412. Stop and say the file was not acquired. |
-| Vimeo | Text tracks for speech when present; `yt-dlp` or the user file for frames. | Password, domain restriction, private. oEmbed description is not the body. |
-| Twitch | User file or an authorized VOD/clip download; Helix is metadata. Creator CC when the connector exposes it. | Live chat is not speech. Do not rip VODs the user did not ask to read. |
-| X, Threads, Facebook, Reddit, LinkedIn, Telegram, 小红书 | Written post/article text is the **post**, not a video. For an attached video or video note: user file, or `yt-dlp` where that public URL actually downloads. | Login walls. Do not treat the post caption as the video. |
-| WeChat 公众号 | Article HTML is the article. An embedded 视频号 still needs a media file. | Verification / captcha → ask for a paste. Do not solve the captcha. |
-
-## Douyin in-app wall
-
-Measured **2026-10-26**:
-
-- Share: `https://v.douyin.com/2qulGbSTiRI`
-- Video id: `7696098282904259850`
-- Public redirect chain from this environment: `v.douyin.com` → `www.iesdouyin.com/share/video/7696098282904259850/` → `https://www.douyin.com/video/7696098282904259850?previous_page=app_code_link`
-- A datacenter `curl` of that chain returns a JavaScript shell, not a media file and not a transcript. The shell does not include the spoken or visual body.
-- **iesdouyin** share pages often show **「请尝试在抖音内观看」**. A datacenter curl of that chain is a JavaScript shell, not an mp4. Do not stop there.
-- **Working player (Mac, 2026-10-26, repeated):** Playwright Chromium, mobile UA, visit `https://www.douyin.com/` (cookies in that browser only), then `https://m.douyin.com/share/video/7696098282904259850`. `<video>.currentSrc` was `https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`. GET that URL with the same browser context and `Referer` set to the share page. It followed to a CDN `video/mp4` (~8MB, 1280×720, H.264+AAC, ~49s). The same helper re-downloaded this aweme from the short link. Helper: `scripts/acquire_douyin.py` (positional URL or aweme id, `--out-dir`; writes `douyin_{aweme_id}.mp4`; success JSON `ok: true`). Then frames, OCR, ASR, and the host video tool.
-- If that mobile share page has no `<video>` src (wall text or a captcha), acquire is blocked. Do not solve the captcha, dump cookies, or decrypt the CDN. User export is the fallback, not the default. Do not pretend a share caption is Understanding.
-
-## Hard limits
-
-No captcha defeat, login bypass, cookie theft, CDN decrypt, or private undocumented API reverse-engineering. No unofficial scraper services. If acquire fails, say so.
+| [YouTube](youtube.md) | yt-dlp public player | Yes; audio + video |
+| [X / Twitter](x.md) | yt-dlp public syndication | Yes; audio + video |
+| [Instagram](instagram.md) | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
+| [TikTok](tiktok.md) | Documented /player/v1/{id} → video src | Yes; audio + video |
+| [Threads](threads.md) | Public page JSON → matching code → video_versions | Yes; audio + video |
+| [Reddit](reddit.md) | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL blocked |
+| [LinkedIn](linkedin.md) | Public video data-sources → progressive MP4 | Yes; audio + video |
+| [Facebook Reels](facebook.md) | Public page JSON → exact video id → browser_native URL | Yes; video only |
+| [Telegram](telegram.md) | Public message widget → scoped video src | Yes; audio + video |
+| [Vimeo](vimeo.md) | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
+| [Twitch](twitch.md) | Public clip player video src → MP4 | Yes; audio + video |
+| [Douyin 抖音](douyin.md) | Mobile share player → playwm → MP4 | Yes; audio + video |
+| [Bilibili 哔哩哔哩](bilibili.md) | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
+| [小红书 / Xiaohongshu](xiaohongshu.md) | Public note page → playing video src (attempted) | NO; risk wall |
+| [WeChat 视频号](wechat-channels.md) | Public sph page → video src (attempted) | NO; QR / app-only page |
+| [WeChat 公众号](wechat-article.md) | Public article body / public embedded player | Current curl hit verification; historical WebFetch body success. Embedded video not verified. |

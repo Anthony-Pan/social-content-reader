@@ -1,49 +1,28 @@
-# Facebook
+# Facebook Reels
 
-**Status:** Partial — public Page posts via authorized Graph API or user paste; personal posts usually unavailable. Reels and videos need a media file.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; video only.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.facebook.com/{page}/posts/{id}`
-- `https://www.facebook.com/watch/?v={id}`
-- `https://fb.watch/{short}`
-- `https://www.facebook.com/reel/{id}`
-- Share links that redirect to the above
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-Page post text from Graph, oEmbed, or a paste is the **post** (`body_kind: post_text`). A Reel or video is not understood from that caption. Acquire a file (user save, or `yt-dlp` when the user asked to read that public video and it downloads without a login bypass), then follow [_video-body.md](_video-body.md). If acquire fails, say the video was not watched.
-
-## Prefer (in order)
-
-1. **Meta Graph API** with a Page/User token the user authorized (host connector preferred).
-2. **Public oEmbed** for some public URLs:
-   `GET https://www.facebook.com/plugins/post/oembed.json?url=<urlencoded>`
-   (Availability varies; treat failures as normal.)
-3. **User paste** of the post text. A Reel caption goes in `caption`, not video Understanding.
-4. Reels/video: local file via Save/export, or `yt-dlp` when the user asked to read that public URL. Then the [media pipeline](_video-body.md). Never a login bypass. Other ToS-sensitive downloaders need explicit approval for that URL.
-
-## Fetch recipe
-
-1. Canonicalize share short-links when possible.
-2. For a text post: Graph connector → oEmbed → user paste. For a Reel or video: acquire a file, then the media pipeline. Do not stop at the caption.
-3. Set honest `body_kind` (`post_text` for the post, `media_understanding` / `transcript` / `visual` after a real media read, `unavailable` when the video was not acquired).
-4. Understanding of a video comes from frames, OCR, and speech. The caption stays in `caption`.
-
-## Honest limits
-
-- Personal profiles and most non-public posts are not agent-readable without authorization.
-- No scraping facebook.com HTML while logged in via stolen cookies.
-- Graph API permissions are narrowly scoped; document `FACEBOOK_ACCESS_TOKEN` / Page id as env conventions only.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/facebook.md. URL: <URL>
-Prefer Graph connector or paste; oEmbed if public. No auth bypass.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.facebook.com/reel/1195289147628387' --out-dir "$HOME/Media/facebook"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Meta Graph API — Pages / Video
-- Facebook oEmbed / plugins documentation
+**Method:** Public page JSON → exact video id → browser_native URL. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+The matched public DASH manifest contains video representations only for this sample. Do not claim speech was acquired. A mistyped alternate id failed. Public page data also contains recommendations: exact id matching is mandatory.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/facebook/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

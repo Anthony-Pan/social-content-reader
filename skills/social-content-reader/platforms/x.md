@@ -1,55 +1,28 @@
 # X / Twitter
 
-**Status:** Public single-post text works. An attached video needs a media file.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-**Goal:** Read what the post says. When the post is a video or a media-only joke, follow [the shared video recipe](_video-body.md). oEmbed text is the post, not a watched video.
+## Automatic acquire first
 
-## URL patterns
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-- `https://x.com/{user}/status/{id}`
-- `https://twitter.com/{user}/status/{id}`
-- `https://mobile.x.com/...`
-
-## Video and graphics
-
-Written post text is `body_kind: post_text`. A video, GIF, or image that carries the claim still needs a local file: frames, OCR, host vision, and ASR when there is speech ([_video-body.md](_video-body.md)). `yt-dlp` is allowed when the user asked to read that public video and the URL downloads without a login bypass. If the file cannot be acquired, say the video was not watched. Do not treat the post caption as the video body.
-
-## Prefer (in order)
-
-1. **Host X connector** (official X API tools / agent X MCP) — best for full text, threads, media metadata.
-2. **Public oEmbed** (no API key):  
-   `GET https://publish.x.com/oembed?url=<urlencoded post url>`  
-   Returns author + HTML/blockquote with post text. Documented embed endpoint; single public posts only.
-3. Ask user to paste the post if oEmbed truncates or fails.
-
-## Fetch recipe
-
-1. Canonicalize to `https://x.com/{user}/status/{id}`.
-2. Try host connector; else oEmbed.
-3. Extract plain text from connector payload or oEmbed `html` / text fields.
-4. Set `body_kind: post_text` when full text available; note truncation in `limits`.
-5. Understanding of a text post comes from the post text. If the post is a video or the text is insufficient for the claim, acquire the media and read it. Do not describe unseen pictures from the caption.
-
-## Honest limits
-
-- oEmbed: **no** reply threads, search, timelines, like counts, or media file bytes. Long posts may end with ellipsis (~280-char era truncation still appears in embeds).
-- Protected, deleted, suspended, age-restricted posts → unavailable.
-- Scraping syndication/guest APIs is brittle and often ToS-hostile — **do not** document exploit paths here; use connector or oEmbed.
-- Quoted posts / cards: may be incomplete via oEmbed.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/x.md. URL: <URL>
-Prefer host X tools if present; else publish.x.com/oembed.
-Return ContentRecord + short understanding. Flag truncation.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://x.com/oshtru/status/1577855540407197696' --out-dir "$HOME/Media/x"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- X oEmbed / publish embed endpoint usage (public posts)
-- Official X API Post lookup when user has developer credentials
+**Method:** yt-dlp public syndication. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
 
-## Success criteria
+## Live result and remaining wall
 
-- Nonempty post text via connector or oEmbed, with truncation flagged, **or** ask user to paste.
+Use `--extractor-args twitter:api=syndication`; do not switch to private GraphQL/guest-token clients. Protected/deleted posts remain unavailable. Embed may only link out.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/x/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

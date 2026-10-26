@@ -1,4 +1,6 @@
-# Optional. Douyin mobile-share acquire only.
-# After install, download the browser once:
-#   python3 -m playwright install chromium
+# Optional browser dependency for public media acquisition.
+# Use a venv; then install the browser once:
+#   python -m playwright install chromium
+# Live matrix used Playwright 1.64.1 / Chromium 156.
+# ffmpeg/ffprobe and yt-dlp are separate CLI dependencies.
 playwright>=1.40

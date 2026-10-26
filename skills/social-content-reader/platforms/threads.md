@@ -1,46 +1,28 @@
-# Threads (Meta)
+# Threads
 
-**Status:** Partial — public post text when oEmbed / public HTML works. Video Understanding needs a local file ([shared video recipe](_video-body.md)).
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; audio + video.** This is file acquisition evidence, not a claim that the video has been understood.
 
-## URL patterns
+## Automatic acquire first
 
-- `https://www.threads.net/@{user}/post/{id}`
-- `https://www.threads.com/@{user}/post/{id}` (alias host)
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-## Video and graphics
-
-The post text is the post. An attached video is not understood from that text. Acquire a file (user save, or `yt-dlp` when the user asked to read that public video and it downloads without a login bypass), then frames + OCR + host vision + ASR. If acquire fails, say the video was not watched. Keep any caption in `caption`.
-
-## Prefer (in order)
-
-1. **Host Meta / Threads connector** if present.
-2. **Public oEmbed** when Meta exposes it for the URL:
-   `GET https://www.threads.net/oembed?url=<urlencoded post url>`
-   (If the endpoint 404s for a given post, fall through — do not invent private Graph calls.)
-3. **WebFetch / curl** of the public post URL with a browser-like UA; extract visible post text only from the returned HTML/JSON-LD when present. Stop on login walls.
-4. User paste of the post text.
-5. For video posts: the [media pipeline](_video-body.md), not the caption.
-
-## Fetch recipe
-
-1. Canonicalize URL; keep `@user` and post id.
-2. Try connector → oEmbed → polite public page read.
-3. Set `body_kind: post_text` when full text available; note truncation.
-4. Understanding of a text post comes from the post text. Video claims wait for the media pipeline.
-
-## Honest limits
-
-- Login-gated, restricted, or deleted posts → unavailable.
-- No cookie dumping, login bypass, or unofficial private Graph scrapers.
-- Threads and Instagram share Meta ToS — respect rate limits; prefer user paste when blocked.
-
-## Codex prompt sketch
-
-```text
-Follow platforms/threads.md. URL: <URL>
-Return ContentRecord + short understanding. Flag login walls honestly.
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.threads.com/@nasa/post/DeMqtuYgkaL' --out-dir "$HOME/Media/threads"
 ```
 
-## References
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-- Meta oEmbed / Threads help docs for embedding public posts
+**Method:** Public page JSON → matching code → video_versions. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
+
+## Live result and remaining wall
+
+Text-only posts are not video failures. The tested embed did not expose video; use the public post. Match exact code to exclude replies, quoted posts and recommendations.
+
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/threads/`. A single public success is not universal platform access.
+
+## Read the media
+
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
+
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

@@ -1,59 +1,28 @@
 # Instagram
 
-**Status:** Media required for a Reel. oEmbed is an embed preview, not the video.
+**v0.5.0 status:** Verified public sample. **Mac 2026-10-26: Yes; video, source has_audio=false.** This is file acquisition evidence, not a claim that the video has been understood.
 
-Captions and embed previews do not establish what a Reel shows or says. Default success is the [shared video recipe](_video-body.md): a local file, frames, burned-in text, host vision, and ASR. Prefer an existing authorized host connector when it returns permitted media or a real transcript; a transcript alone is speech, not the picture.
+## Automatic acquire first
 
-## URL patterns
+Prefer a configured authorized connector if it returns permitted media. Otherwise run:
 
-- `https://www.instagram.com/p/{code}/`
-- `https://www.instagram.com/reel/{code}/` (also `/reels/{code}/`)
-- `https://www.instagram.com/tv/{code}/`
+```bash
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://www.instagram.com/reel/Chunk8-jurw/' --out-dir "$HOME/Media/instagram"
+```
 
-## Video and graphics
+Replace the sample with the requested public URL. Resolve ordinary short-link redirects automatically before passing a canonical URL when needed; never ask the user to export as the first step.
 
-Follow [_video-body.md](_video-body.md). A pasted transcript fills `speech_text` (`body_kind: transcript`, `fetch_method: user_paste`) and must say graphics were not read unless frames were also supplied. A caption alone stays in `caption`.
+**Method:** Public page JSON → matching code → video_versions. The helper uses a fresh browser context or ignores local yt-dlp config. It does not read user browser profiles, solve captchas, call private app APIs or decrypt media. Require exit 0, `ok: true`, a real `path`, positive duration and `has_video: true`. Check `has_audio`; video-only evidence cannot establish speech.
 
-## Reel understanding path (in order)
+## Live result and remaining wall
 
-1. **User-provided media:** Instagram Share → Download/Save video where offered, an official account export, or an authorized browser download. Menu wording and availability vary; a bookmark may only save a reference. Obtain an actual local audio/video file.
-2. **yt-dlp** when the user asked to read this Reel: `yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<reel url>"`. Stop on login or captcha. Do not extract browser cookies, request credentials, or use private API plugins. Other ToS-sensitive downloaders still need explicit approval for that URL.
-3. **On the local file**, run frames, OCR, host vision, and ASR:
+The sample is silent. The public embed alone exposed no file; the regular public Reel page did. Login/captcha/private posts stop acquisition. Never select a recommended Reel.
 
-   ```bash
-   python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/reel.mp4" --mode fps --fps 1 --max-frames 24
-   python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
-   python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/reel.mp4" --language auto --backend auto --model base
-   ```
+Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/instagram/`. A single public success is not universal platform access.
 
-   Windows: `py -3.12` and `C:\Media\reel.mp4`. Resolve helpers relative to `SKILL.md`. Check exit code and `ok`. Map ASR `text` to `speech_text`, OCR text to `visual_text`, and the host vision notes to `visual_description`. Set `body_kind: media_understanding` and `fetch_method: media_pipeline` when pictures and speech were both read. See [ASR setup](../scripts/README.md).
-4. **User paste of a transcript** is speech evidence only (`body_kind: transcript`). Ask for the file or screenshots when the question is about graphics.
-5. **Official Instagram Graph API:** for user-owned or explicitly authorized Business/Creator accounts with required permissions. Retrieve only media the official API authorizes for that account; if it supplies a permitted downloadable media URL, save the file and run the media pipeline. Do not imply arbitrary public Reels have transcripts in Graph API responses.
+## Read the media
 
-## Official account configuration (documentation only)
+Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.
 
-Environment names for a separately configured official integration:
-
-- `IG_ACCESS_TOKEN` — user-authorized token, never a committed value.
-- `IG_USER_ID` — authorized Business/Creator account ID.
-- `IG_APP_ID`, `IG_APP_SECRET` — app credentials when required by the chosen official login flow.
-- `IG_GRAPH_API_VERSION` — supported version selected for that app.
-
-These are suggested integration names, **not variables consumed by `asr_local.py`**. Permissions, host and token type depend on the official login flow; follow [Meta's Instagram platform documentation](https://developers.facebook.com/docs/instagram-platform/). Do not print tokens or persist token-bearing media URLs in normalized records.
-
-## oEmbed honesty
-
-- oEmbed is for a front-end embed/basic preview, **not** transcript extraction or an analytics corpus. Observe [Meta's oEmbed terms and requirements](https://developers.facebook.com/docs/instagram-platform/oembed/).
-- The repository's [earlier smoke](../../../SMOKE_RESULTS.md) returned embed HTML/provider fields and **no speech transcript**. Do not infer speech from stripped embed HTML.
-- A missing file is `body_kind: unavailable` and `fetch_method: acquire_failed`. Store a separately provided caption in `caption` with `fetch_method: oembed` on that field's source note. Do not promote it to Understanding.
-- Authentication/version/rate requirements can change; no tokenless availability or quota guarantee is made here.
-
-## Limits and stopping conditions
-
-No login bypass, captcha defeat, cookie theft/dumping, session hijack, DRM bypass, or unofficial private API scrapers. URL-only private/inactive/restricted posts and Stories have no supported general fetch path here. An authorized user file or paste can still be understood regardless of its original share-link format. ASR covers speech, not silent visual actions or on-screen text; request screenshots/text when needed. Never claim ASR/OCR that was not run.
-
-If all you have is a link or a caption, the Reel was not watched. Ask for a file. If a file exists, run the media pipeline and report dependency errors instead of declaring the Reel unreadable.
-
-## Success criteria
-
-- `body_kind: media_understanding` after frames and speech were read, or `transcript` / `visual` with that gap stated. oEmbed alone is not success.
+If the automatic acquire returns a login, captcha, risk, app-only, deleted, DRM or missing-file result, record the exact failure and stop that route. Set `body_kind: unavailable`, `fetch_method: acquire_failed` (or `blocked`), and say the video was not watched. Use an already authorized connector or official account integration when available. User Save/export is **last resort after documented automatic attempts fail**, never the default. Do not write Understanding from the caption.

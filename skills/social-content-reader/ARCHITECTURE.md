@@ -15,8 +15,8 @@ URL or local file
 └────────┬────────┘
          ▼
 ┌──────────────────────────────┐
-│ 3a. Video: acquire local file │  platform helper (Douyin playwm), yt-dlp
-│     or honest acquire_failed  │  only where a file was saved, user file.
+│ 3a. Video: acquire local file │  validated public-player helper, scoped yt-dlp
+│     or honest acquire_failed  │  fresh contexts, receipts, or an attached file.
 └────────┬─────────────────────┘
          ▼
 ┌─────────────────┐
@@ -100,12 +100,11 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
 
 Platform docs name the acquire tool that actually works. The shared order:
 
-1. **Platform acquire helper** when that platform’s doc makes it the default. Douyin: `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → mp4). Run it without asking the user to export.
-2. **A file the user already attached.** Read it. Do not ask for an export before step 1 has been tried.
-3. **yt-dlp** when the user asked to read the video and a run on that platform has saved a file (YouTube, Mac 2026-10-26). Stop on login, captcha, DRM, IP block, or HTTP 412. TikTok and Bilibili file download are not verified.
-4. **Host connector** when it returns a real transcript and/or permitted media. Official CC (YouTube, Bilibili, Vimeo text tracks) fills `speech_text` only.
-5. **Read the file:** `extract_frames.py` → `ocr_frames.py` → host vision/video tool → `asr_local.py` when speech is still missing.
-6. **Acquire failed:** stop. `body_kind: unavailable`. Do not substitute the share caption. User export is a fallback only after the documented player returns no media URL.
+1. **Authorized host connector** when it supplies permitted media or actual speech. Speech alone still needs visual evidence.
+2. **Automatic public acquire:** `scripts/acquire_media.py URL --out-dir DIR`, following the platform recipe. It verifies a local video file, emits audio presence, duration and SHA-256, and stores a receipt. The 2026-10-26 matrix has 13 video-platform sample files, including TikTok's official embed and Bilibili's external-player tracks. 小红书 / 视频号 remain blocked. Reddit's public CDN works but its post resolver is blocked. 公众号 embedded media is unverified.
+3. **A file the user already attached.** Read it directly. Do not ask for an export while a documented automatic path is available.
+4. **Read the file:** `extract_frames.py` → `ocr_frames.py` → host vision/video tool → official speech track or `asr_local.py`. `has_audio: false` cannot establish speech.
+5. **Acquire failed:** return `body_kind: unavailable` / `fetch_method: acquire_failed` or `blocked`. Do not substitute a share caption. Use a configured official account integration if available; user export is last resort after the automatic paths fail.
 
 For a file that is already on disk, start at step 5. A successful full read uses `body_kind: media_understanding` and `fetch_method: media_pipeline`. ASR-only is `transcript` / `user_media_asr` and must say graphics were not read.
 

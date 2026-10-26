@@ -1,0 +1,259 @@
+[
+  {
+    "ok": true,
+    "platform": "youtube",
+    "source_url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+    "method": "yt_dlp",
+    "bytes": 475989,
+    "sha256": "488c5108c18e9ac4993e58eb3e561149f4fe05cf4abf7bf2c91afa9e162153cd",
+    "duration_sec": 19.014,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "av1",
+      "opus"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "youtube/youtube_488c5108c18e9ac4.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "x",
+    "source_url": "https://x.com/oshtru/status/1577855540407197696",
+    "method": "yt_dlp_syndication",
+    "bytes": 893919,
+    "sha256": "8500828fc95e473bb743c127282896999968883222a2aa640f85b58956269313",
+    "duration_sec": 30.036875,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "x/x_8500828fc95e473b.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "instagram",
+    "source_url": "https://www.instagram.com/reel/Chunk8-jurw/",
+    "method": "public_page_media",
+    "bytes": 918120,
+    "sha256": "7a956bbb30f3fa0488b2fc687a077fb6156cd1b5fdd0b98157b26e6355a950ef",
+    "duration_sec": 4.966667,
+    "has_video": true,
+    "has_audio": false,
+    "codecs": [
+      "h264"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "instagram/instagram_7a956bbb30f3fa04.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "tiktok",
+    "source_url": "https://www.tiktok.com/@scout2015/video/6718335390845095173",
+    "method": "public_page_media",
+    "bytes": 2953029,
+    "sha256": "d2899f4428fa4c46a8dca6b0222bc313ffdeff0fd8ed6f99a300f1833b3fda3e",
+    "duration_sec": 10.495011,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "tiktok/tiktok_d2899f4428fa4c46.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "threads",
+    "source_url": "https://www.threads.com/@nasa/post/DeMqtuYgkaL",
+    "method": "public_page_media",
+    "bytes": 11169291,
+    "sha256": "8f063507f698a30d904d2b9fb293412a2249adeac1ad3e933505b71d0db4e7a2",
+    "duration_sec": 89.470708,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "threads/threads_8f063507f698a30d.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "reddit",
+    "source_url": "https://v.redd.it/gyh95hiqc0b11",
+    "method": "yt_dlp",
+    "bytes": 7478923,
+    "sha256": "5dcd184489f41800edfafd60dbab966226cbc262421cf92c8385f271aaf84e97",
+    "duration_sec": 13.7,
+    "has_video": true,
+    "has_audio": false,
+    "codecs": [
+      "h264"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "limits": [
+      "Public CDN URL known from public yt-dlp fixture; post URL/JSON and redditmedia embed blocked",
+      "Video-only manifest"
+    ],
+    "file": "reddit/reddit_5dcd184489f41800.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "linkedin",
+    "source_url": "https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7",
+    "method": "public_page_media",
+    "bytes": 5316468,
+    "sha256": "496e0813b1cc2178e3afc14ad61338eeaa371ae9b4c6afcb6479887ce71a245b",
+    "duration_sec": 161.866009,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "linkedin/linkedin_496e0813b1cc2178.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "facebook",
+    "source_url": "https://www.facebook.com/reel/1195289147628387",
+    "method": "public_page_media",
+    "bytes": 622802,
+    "sha256": "cc12fd22535bfa0d5f224e105c1c4abf3525cc4cf33501d1f7ed6c5c469123a2",
+    "duration_sec": 9.566667,
+    "has_video": true,
+    "has_audio": false,
+    "codecs": [
+      "h264"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "facebook/facebook_cc12fd22535bfa0d.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "telegram",
+    "source_url": "https://t.me/telegram/402",
+    "method": "public_page_media",
+    "bytes": 1408169,
+    "sha256": "2604a7144d849a8e4ac48cadba88abdfde3fb1aa09be0ced8e7a513ba1dc770e",
+    "duration_sec": 8.0,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "telegram/telegram_2604a7144d849a8e.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "vimeo",
+    "source_url": "https://vimeo.com/22439234",
+    "method": "yt_dlp",
+    "bytes": 20561134,
+    "sha256": "b7b62529f65a3d07389b2f2f29c1be3941099deb1fd9e173e65dee6749cce5a2",
+    "duration_sec": 185.877333,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "vimeo/vimeo_b7b62529f65a3d07.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "twitch",
+    "source_url": "https://clips.twitch.tv/FaintLightGullWholeWheat",
+    "method": "public_page_media",
+    "bytes": 16299328,
+    "sha256": "9d3021eae0ac932a520b5ebedf995ec14901d882d97b27eeccbbb5b9440a4317",
+    "duration_sec": 32.099,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "twitch/twitch_9d3021eae0ac932a.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "douyin",
+    "source_url": "https://www.douyin.com/video/7696098282904259850",
+    "method": "douyin_mobile_player",
+    "bytes": 8382047,
+    "sha256": "2d5c9591cdc9468ad44254889943e09b7039d773a34e20275afe85ff1a66246e",
+    "duration_sec": 48.833333,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "h264",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "douyin/douyin_2d5c9591cdc9468a.mp4"
+  },
+  {
+    "ok": true,
+    "platform": "bilibili",
+    "source_url": "https://www.bilibili.com/video/BV17x411w7KC",
+    "method": "browser_media_tracks",
+    "bytes": 6445696,
+    "sha256": "ee02d4fb68da3725b9606c2f6b25a06ff99a7aef743dd283226cc721c4c7e537",
+    "duration_sec": 199.319433,
+    "has_video": true,
+    "has_audio": true,
+    "codecs": [
+      "av1",
+      "aac"
+    ],
+    "decode_ok": true,
+    "decode_error_count": 0,
+    "file": "bilibili/bilibili_ee02d4fb68da3725.mp4"
+  },
+  {
+    "ok": false,
+    "platform": "xiaohongshu",
+    "source_url": "https://www.xiaohongshu.com/explore/6411cf99000000001300b6d9",
+    "error": "public page presents an access/risk challenge; stopped",
+    "body_kind": "unavailable",
+    "fetch_method": "acquire_failed"
+  },
+  {
+    "ok": false,
+    "platform": "wechat-channels",
+    "source_url": "https://weixin.qq.com/sph/AAZ3p39sQm",
+    "error": "public page exposes no media for requested post; caption is metadata only",
+    "body_kind": "unavailable",
+    "fetch_method": "acquire_failed"
+  },
+  {
+    "platform": "wechat-article",
+    "ok": false,
+    "source_url": "https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw",
+    "error": "Current curl returned 环境异常 verification; no js_content. Embedded media not acquired. Historical WebFetch article body success is not a new pass."
+  }
+]

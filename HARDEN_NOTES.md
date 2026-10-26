@@ -1,3 +1,49 @@
+# v0.5.0 hardening — Mac, 2026-10-26
+
+Automatic public media acquire now precedes user export. See
+[SMOKE_RESULTS.md](SMOKE_RESULTS.md) for exact live evidence: 13 video
+platform sample files saved; 小红书 and 视频号 remain blocked; 公众号
+verification and Reddit post-resolution limits remain explicit.
+
+- Fresh Playwright contexts only; no persistent profile, saved cookie
+  file, browser-cookie extraction, captcha solver, private API client,
+  certificate interception or decryption. Douyin's prior webdriver-hiding
+  flags/script were removed and the ordinary mobile player was re-tested.
+- TikTok uses its documented public embed. Bilibili observes media requests
+  the public external player actually makes, preserves normal request headers,
+  downloads the full unencrypted tracks, and muxes video+audio with ffmpeg.
+  Unverified Bilibili multipart requests are rejected instead of substituting part 1.
+- HTTP status alone never establishes success. ffprobe must find a positive
+  duration and video stream. Complete HTTP 206 requires matching Content-Range
+  and actual byte length; error.mp4 placeholders and HTML are rejected.
+- Meta page media is selected by exact requested post code/video id. Tests
+  exclude recommendations. Telegram uses its exact public message widget,
+  not the first media on a multi-message preview.
+- yt-dlp uses `--ignore-config`, no credentials, no retries, and bounded socket
+  timeout. X explicitly selects public syndication. Vimeo uses a public
+  player URL. Reddit direct CDN success does not imply post resolution.
+- Downloads stage in temporary folders; only validated output is published.
+  Receipts include source URL, hash, bytes, duration, codecs and audio/video
+  presence. Exceptions do not print raw browser/downloader signed media URLs.
+- `has_audio: false` stays explicit (Instagram, Facebook and Reddit samples).
+  No caption is returned as body_text, and acquisition never claims
+  Understanding. No cloud ASR or other upload was run for this matrix.
+
+Validation: 55 unit tests passed; every one of the 13 counted files decoded
+end to end with FFmpeg exit 0 and no error output. Replay is explicit via
+`smoke_acquire.py`; network tests are not part of CI's unit suite. Current
+receipts are committed under `references/acquire-matrix-2026-10-26.json`.
+
+Remaining limitations: browser/player markup changes, fixed public-page
+load allowance (adjustable 1–60 seconds), local disk/memory for downloads,
+no generic blob/HLS capture or arbitrary long Twitch VOD acquisition.
+`--max-mb` limits accepted outputs/tracks, not all page network traffic.
+The full all-platform acquisition goal is still partially unmet.
+
+---
+
+# Historical hardening notes — earlier release snapshots
+
 # social-content-reader v0.4.0 media-first notes
 
 Updated 2026-10-26.

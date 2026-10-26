@@ -156,3 +156,41 @@ python -B -m unittest discover -s skills/social-content-reader/scripts/tests -v
 Tests use backend stubs to cover routing, JSON, failure handling and upload boundaries; they do not prove speech accuracy. Actual ASR needs installed dependencies, model weights (local) or an authorized configured API, and a real speech file. Current machine smoke results: [HARDEN_NOTES.md](../../../HARDEN_NOTES.md).
 
 Sources: [faster-whisper usage and decoding requirements](https://github.com/SYSTRAN/faster-whisper), [openai-whisper setup/usage](https://github.com/openai/whisper), [official OpenAI transcription guide](https://developers.openai.com/api/docs/guides/speech-to-text).
+
+## Public video acquire (v0.5.0)
+
+`acquire_media.py URL --out-dir ~/Media/proof` tries a documented public player
+or yt-dlp route in a fresh context. Requires `ffmpeg`, `ffprobe`, `yt-dlp` for
+YouTube/X/Vimeo/direct Reddit CDN, and Playwright Chromium for browser routes. Install Playwright
+in a venv (`python3 -m venv .venv-acquire; .venv-acquire/bin/pip install playwright;
+.venv-acquire/bin/playwright install chromium`). Use that venv Python to run the helper, or activate it before the `python3`
+examples. No browser profile or cookie file is read. The existing Douyin helper is routed through the same file validation.
+
+Success: exit 0, JSON `ok: true`, absolute `path`, `bytes`, SHA-256, duration,
+`has_video`, `has_audio`, codec names, source URL and method. The same receipt
+is written beside the file. Silent/video-only files have `has_audio: false`;
+that is picture-only evidence until source audio absence has been checked.
+No Understanding is produced by a downloader. Failure: exit 1, `ok: false`,
+`body_kind: unavailable`, `fetch_method: acquire_failed`, no success path.
+Partial downloads live in a temporary directory and are removed on failure.
+
+`--max-mb 128` bounds each download and the published output; `--wait-seconds 8`
+is the public player load allowance (1–60). Downloader calls ignore local
+yt-dlp configuration. Browser routes reject error.mp4 placeholders. HTTP 206
+is accepted only when Content-Range and actual bytes cover the entire file.
+Bilibili's unencrypted video/audio tracks are muxed locally without re-encoding.
+See [the live matrix](../../../SMOKE_RESULTS.md) for actual successes and walls.
+
+Live sample replay (network and disk use; separate from unit tests):
+
+```bash
+.venv-acquire/bin/python -B skills/social-content-reader/scripts/smoke_acquire.py --platform tiktok --proof-dir "$HOME/Developer/scr-proof/recheck"
+# --all explicitly attempts all 16 sample recipes; returns 1 if any failed.
+```
+
+`PASS.json` / `FAIL.txt` describe the latest attempt; media receipts are immutable
+file evidence. Reddit's sample starts from an independently known public CDN
+URL and does not test arbitrary post resolution. 公众号's sample is an embedded
+video probe, not the article-body reader. This runner never produces Understanding.
+`--max-mb` limits accepted files; browser playback and HTTP transfers may fetch
+more data before an oversize response can be rejected.
