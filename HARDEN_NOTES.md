@@ -110,7 +110,7 @@ Platform/script paths above are relative to `skills/social-content-reader/` unle
 
 ## Capability matrix (v0.2.0 snapshot)
 
-This table records the v0.2.0 harden. Current recipes are SKILL.md **0.3.2**: a public caption (including 视频号 sph WebFetch) is enough to understand the post. Do not read the rows below as a requirement to ask for a file.
+This table records the v0.2.0 harden. Current recipes are SKILL.md **0.4.0**: Understanding comes from frames, OCR, vision, and speech. A public caption, including a 视频号 sph WebFetch, is metadata.
 
 | Platform | v0.2.0 status | Evidence/input needed |
 | --- | --- | --- |

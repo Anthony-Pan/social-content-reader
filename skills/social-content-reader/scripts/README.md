@@ -69,8 +69,6 @@ macOS: `brew install tesseract tesseract-lang`. Windows: `winget install --id UB
 
 ## ASR usage and output
 
-ASR is optional. Use it when the user wants spoken or verbatim words, or the public caption/post text is empty. A fetched caption is already enough to understand what the post is about; do not require this helper first. For 视频号, WebFetch `weixin.qq.com/sph/<id>` and summarize the caption (example `AAZ3p39sQm`: Codex token waste, brainstorm in ChatGPT first).
-
 From the repo root (adjust paths for a copied/installed skill):
 
 ```powershell

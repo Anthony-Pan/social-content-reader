@@ -3,15 +3,16 @@ name: social-content-reader
 description: >
   Read and understand social videos and posts by watching the media: frames,
   burned-in text, and speech. Use when the user pastes a YouTube, X/Twitter,
-  Instagram, TikTok, Threads, Reddit, LinkedIn, Facebook, Telegram, Vimeo,
-  Twitch, Douyin, Bilibili, Xiaohongshu/RedNote, WeChat 公众号, or WeChat
-  视频号 URL — or supplies a local audio/video file — and the agent needs
-  the on-screen picture, graphics, and spoken words. A share caption is
-  optional metadata, never the only body. If the media file cannot be
-  acquired, say so. Prefer an existing platform connector if present;
-  otherwise follow this skill's documented public fetch paths. Windows 24/7
-  is fine for heavy jobs. Mac and Linux are fully supported for Codex skill
-  load, fetch, frame extraction, OCR, and ASR.
+  Instagram, TikTok, Threads, Reddit, Facebook, Vimeo, Douyin, Bilibili,
+  WeChat 公众号, or WeChat 视频号 URL — or supplies a local audio/video
+  file — and the agent needs the on-screen picture, graphics, and spoken
+  words. A share caption is optional metadata, never the only body. If the
+  media file cannot be acquired, say so. LinkedIn, 小红书, Telegram, and
+  Twitch recipes exist under platforms/ and are not supported. Prefer an
+  existing platform connector if present; otherwise follow this skill's
+  documented public fetch paths. Windows 24/7 is fine for heavy jobs. Mac
+  and Linux are fully supported for Codex skill load, fetch, frame
+  extraction, OCR, and ASR.
 license: MIT
 compatibility: >
   Cursor / Claude Code / Codex Agent Skills loaders. Network access required
@@ -46,8 +47,8 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
 
 1. **Detect platform** from the URL (see [ARCHITECTURE.md](ARCHITECTURE.md)). A local file needs no URL.
 2. **Classify the thing being read.**
-   - **Video / graphics** (Reels, Shorts, TikTok, Douyin, 视频号, Bilibili, Vimeo, Twitch VOD/clip, and any attached video): run the media pipeline below. This is the default success path.
-   - **Written post or article** (Reddit selftext, X/Threads text, 公众号 article, LinkedIn article, Telegram text): the written body is the post. An attached video still uses the media pipeline.
+   - **Video / graphics** (Reels, Shorts, TikTok, Douyin, 视频号, Bilibili, Vimeo, and any attached video): run the media pipeline below. This is the default success path.
+   - **Written post or article** (Reddit selftext, X/Threads text, 公众号 article): the written body is the post. An attached video still uses the media pipeline.
 3. **Prefer a host connector** when it returns a real transcript, permitted media, or the article body. Metadata-only connectors are not finished.
 4. **Video pipeline** — follow [platforms/_video-body.md](platforms/_video-body.md) and the platform doc:
    1. **Acquire** a local video/audio file (or a user-exported keyframe set). Douyin’s default is `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → `douyin_{id}.mp4`) with no user export step. Mac, 2026-10-26: that helper re-downloaded aweme `7696098282904259850` repeatedly. `yt-dlp` is an allowed public CLI when the user asked to read the video and a run has saved a file (YouTube on that Mac). TikTok was IP-blocked and Bilibili returned HTTP 412; do not claim those file recipes. App Save/export is the fallback when the documented player has no media URL. ToS-sensitive downloaders other than those documented paths need explicit approval for that URL.
@@ -62,9 +63,10 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
 
 Platform docs:
 
-- Overseas: [youtube.md](platforms/youtube.md), [x.md](platforms/x.md), [instagram.md](platforms/instagram.md), [tiktok.md](platforms/tiktok.md), [threads.md](platforms/threads.md), [reddit.md](platforms/reddit.md), [linkedin.md](platforms/linkedin.md), [facebook.md](platforms/facebook.md), [telegram.md](platforms/telegram.md), [vimeo.md](platforms/vimeo.md), [twitch.md](platforms/twitch.md)
-- Chinese: [bilibili.md](platforms/bilibili.md), [douyin.md](platforms/douyin.md), [xiaohongshu.md](platforms/xiaohongshu.md), [wechat-article.md](platforms/wechat-article.md), [wechat-channels.md](platforms/wechat-channels.md)
+- Overseas: [youtube.md](platforms/youtube.md), [x.md](platforms/x.md), [instagram.md](platforms/instagram.md), [tiktok.md](platforms/tiktok.md), [threads.md](platforms/threads.md), [reddit.md](platforms/reddit.md), [facebook.md](platforms/facebook.md), [vimeo.md](platforms/vimeo.md)
+- Chinese: [bilibili.md](platforms/bilibili.md), [douyin.md](platforms/douyin.md), [wechat-article.md](platforms/wechat-article.md), [wechat-channels.md](platforms/wechat-channels.md)
 - Shared video steps: [_video-body.md](platforms/_video-body.md)
+- Not supported (files remain): [linkedin.md](platforms/linkedin.md), [telegram.md](platforms/telegram.md), [twitch.md](platforms/twitch.md), [xiaohongshu.md](platforms/xiaohongshu.md)
 
 ## Media commands
 
@@ -154,11 +156,8 @@ Video status means **media understanding** (picture and speech), not caption-onl
 | TikTok | Media required | A local file, then the media pipeline. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. Do not treat `yt-dlp` as a verified TikTok file recipe until a sample saves a file. oEmbed caption is metadata. |
 | Threads | Post text when public; video needs a file | oEmbed / public page for the post. Video → media pipeline. |
 | Reddit | Public selftext works; v.redd.it needs a file | `.json` for the post. Video → media pipeline. |
-| LinkedIn | Often login-walled; video needs a file | Authorized API or user paste for the post. Video → media pipeline. |
 | Facebook | Page post when authorized; Reel needs a file | Graph / paste for the post. Video → media pipeline. |
-| Telegram | Public channel text via `t.me/s/`; video/voice needs a file | Preview for text. Media file → frames + ASR. |
 | Vimeo | Works when text tracks or a file are read | Text tracks = speech. Frames for graphics. Description is not the body. |
-| Twitch | VOD/clip needs CC or a file | Helix metadata. Chat is not speech. Chunk long ASR. |
 
 ### Chinese
 
@@ -166,6 +165,7 @@ Video status means **media understanding** (picture and speech), not caption-onl
 | --- | --- | --- |
 | Bilibili | Speech when uploader CC exists; graphics need a file | View API + subtitles for speech. Graphics need a real file. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. `desc` is not speech. |
 | Douyin 抖音 | Media required; auto-acquire works repeatedly | `acquire_douyin.py`: homepage cookies, then `m.douyin.com/share/video/{id}`, then the `<video>` playwm URL → CDN mp4. Mac, 2026-10-26: aweme `7696098282904259850` re-downloaded from `v.douyin.com/2qulGbSTiRI` (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
-| 小红书 / RedNote | Note text via paste; video/images need media | User paste for the note. Video → media pipeline. Images → OCR/vision. |
 | WeChat 公众号 | Article body on short `/s/<id>` links | WebFetch/curl for the article. Embedded 视频号 → media pipeline. |
 | WeChat 视频号 | Media required | User export/save. sph WebFetch caption is metadata. Feed paths stay `errCode 10012`. |
+
+LinkedIn, 小红书, Telegram, and Twitch are not in this matrix. Their `platforms/*.md` files remain and are not supported.

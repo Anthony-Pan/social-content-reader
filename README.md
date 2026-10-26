@@ -67,11 +67,8 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | **TikTok** | Media required | A local file, then the media pipeline | oEmbed caption is metadata. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. That is not a verified file recipe. |
 | **Threads** | Post text when public; video needs a file | Public post text. Video → media pipeline | Login walls → ask for paste or a file. |
 | **Reddit** | Public text works; video needs a file | OP selftext. `v.redd.it` → media pipeline | Public `.json` append or host connector. |
-| **LinkedIn** | Partial; video needs a file | Post/article when authorized or pasted | Often login-walled. Native video is not the blurb. |
 | **Facebook** | Page post when authorized; Reel needs a file | Graph/paste for the post. Reel → media pipeline | Personal posts usually unavailable. |
-| **Telegram** | Public text via `t.me/s/`; video needs a file | Channel text. Video/voice → file + pipeline | Private chats need bot membership or export. |
 | **Vimeo** | Works when text tracks or a file are read | Text tracks = speech. Frames = graphics | oEmbed description is metadata. |
-| **Twitch** | VOD/clip needs CC or a file | CC or ASR for speech; frames for graphics | Helix is metadata. Chat is not the VOD. |
 
 ### Chinese
 
@@ -79,11 +76,12 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 | --- | --- | --- | --- |
 | **Bilibili** | Speech when uploader CC exists; graphics need a file | CC = speech. Frames = graphics, and only after a real file | `desc` is metadata. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. |
 | **Douyin 抖音** | Media required; auto-acquire works | mp4 from `acquire_douyin.py`, then frames + OCR + vision + ASR | Mac, 2026-10-26: short link `v.douyin.com/2qulGbSTiRI` → aweme `7696098282904259850` re-downloaded repeatedly (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
-| **小红书 / RedNote** | Note text via paste; video/images need media | Pasted note body. Video/images → media pipeline | App/login walls common. A title card is not the note. |
 | **WeChat 公众号** | Article body on short `/s/<id>` links | Article HTML. Embedded 视频号 → media file | Verification → user paste. Do not solve captchas. |
 | **WeChat 视频号** | Media required | User export/save, then the media pipeline | sph WebFetch caption is metadata. Feed paths stay blocked (`errCode 10012`). |
 
 See `skills/social-content-reader/platforms/*.md`. Shared video steps: [`platforms/_video-body.md`](skills/social-content-reader/platforms/_video-body.md).
+
+Platform recipes for LinkedIn / 小红书 / Telegram / Twitch still exist under `platforms/` but are not listed as supported.
 
 ## Media pipeline
 
@@ -139,9 +137,9 @@ social-content-reader/
     SKILL.md
     ARCHITECTURE.md
     platforms/          # youtube, x, instagram, tiktok, threads, reddit,
-                        # linkedin, facebook, telegram, vimeo, twitch,
-                        # bilibili, douyin, xiaohongshu, wechat-*
+                        # facebook, vimeo, bilibili, douyin, wechat-*
                         # _video-body.md  (shared video + graphics recipe)
+                        # linkedin, telegram, twitch, xiaohongshu stay on disk, unlisted
     scripts/
       normalize_url.py
       extract_frames.py

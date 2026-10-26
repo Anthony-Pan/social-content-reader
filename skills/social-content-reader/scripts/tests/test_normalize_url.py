@@ -1,10 +1,8 @@
 """URL detect checks: no network.
 
-Doc smoke: ``https://weixin.qq.com/sph/AAZ3p39sQm`` is the caption→understand
-example. Live WebFetch on 2026-10-26 returned a Chinese share caption whose
-themes are Codex token waste and brainstorming in ChatGPT first (then hand
-the conversation to Codex), dated 2026年9月2日, plus a thumbnail. This module
-does not fetch the network; it pins that id and those themes.
+``https://weixin.qq.com/sph/AAZ3p39sQm`` normalizes to a 视频号 share id.
+A 2026-10-26 WebFetch of that page returned a caption (Codex token waste;
+brainstorm in ChatGPT first). That caption is metadata, not Understanding.
 """
 
 import importlib.util
@@ -19,30 +17,15 @@ normalize_url = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(normalize_url)
 
 
-# Expected themes for the measured sph caption (WebFetch, 2026-10-26).
-SPH_CAPTION_UNDERSTAND_EXAMPLE = {
-    "url": "https://weixin.qq.com/sph/AAZ3p39sQm",
-    "canonical_id": "AAZ3p39sQm",
-    "expected_themes": (
-        "Codex token waste",
-        "brainstorm in ChatGPT first",
-    ),
-}
-
-
 class NormalizeUrlTests(unittest.TestCase):
-    def test_sph_aaz3_is_caption_understand_example(self):
-        example = SPH_CAPTION_UNDERSTAND_EXAMPLE
-        got = normalize_url.detect(example["url"])
+    def test_sph_aaz3_caption_is_not_understanding(self):
+        got = normalize_url.detect("https://weixin.qq.com/sph/AAZ3p39sQm")
         self.assertEqual(got["platform"], "wechat-channels")
-        self.assertEqual(got["canonical_id"], example["canonical_id"])
+        self.assertEqual(got["canonical_id"], "AAZ3p39sQm")
         self.assertEqual(got["link_form"], "sph_share")
-        self.assertTrue(
-            any("caption" in item and "understand" in item for item in got["limits"])
-        )
-        themes = " ".join(example["expected_themes"])
-        self.assertIn("Codex token waste", themes)
-        self.assertIn("brainstorm in ChatGPT first", themes)
+        limits = " ".join(got["limits"])
+        self.assertIn("caption", limits)
+        self.assertNotIn("enough to understand", limits)
 
     def test_weixin_sph_share_link(self):
         got = normalize_url.detect("https://weixin.qq.com/sph/AAZ3p39sQm")

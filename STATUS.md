@@ -29,7 +29,7 @@
 
 ## Matrix (honest, Mac 2026-10-26)
 
-See README / SKILL — 16 platforms. Live file acquire on Anthony’s Mac that day:
+See README / SKILL — 12 advertised platforms. LinkedIn, 小红书, Telegram, and Twitch stay as unlisted recipes under `platforms/`. Live file acquire on Anthony’s Mac that day:
 
 | Platform | File acquire |
 | --- | --- |
