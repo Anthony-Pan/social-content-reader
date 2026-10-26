@@ -22,7 +22,7 @@ compatibility: >
   heavy jobs; Mac and Linux fully support Codex skill load, fetch, and ASR.
 metadata:
   author: Anthony-Pan
-  version: "0.5.0"
+  version: "0.5.1"
   runtime: "Windows 24/7 OK for heavy jobs; Mac/Linux fully supported for Codex skill load + fetch + ffmpeg frames + ASR"
 ---
 

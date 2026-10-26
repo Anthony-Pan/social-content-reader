@@ -6,6 +6,8 @@ Small URL/ASR helpers; no platform downloader, login automation, or private API 
 | --- | --- |
 | `normalize_url.py` | Detect platform + canonical id/url from a link (no network) |
 | `acquire_douyin.py` | Save a Douyin mp4 from the mobile share `<video>` playwm URL (Playwright). No caption body. |
+| `acquire_media.py` | Public social media acquire (validated file) or WeChat 公众号 article body via `fetch_wechat_article`. |
+| `fetch_wechat_article.py` | Fetch/parse 公众号 article HTML (stdlib HTTPS, Chrome UA). Body OK without ffmpeg; optional mpvideo embed media. |
 | `extract_frames.py` | ffmpeg keyframes (`--mode fps` or `--mode scene`); JSON with paths and `timestamp_sec`. No URL download. |
 | `ocr_frames.py` | OCR local frames with tesseract, or macOS Vision (`ocr_vision.swift`) when `swiftc` exists. `engine: none` if neither is installed. |
 | `asr_local.py` | Transcribe a user-provided audio/video file using local Whisper or the official OpenAI Whisper API; JSON stdout |
@@ -23,6 +25,23 @@ python skills\social-content-reader\scripts\normalize_url.py "https://youtu.be/d
 `weixin.qq.com/sph/<id>` (optional `www`) returns `platform: wechat-channels`, `link_form: sph_share`, and `canonical_url: https://weixin.qq.com/sph/<id>`. `channels.weixin.qq.com` stays `wechat-channels` without an sph id.
 
 Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder. Video Understanding uses `extract_frames.py` + `ocr_frames.py` + the host vision tool + `asr_local.py`. See [platforms/_video-body.md](../platforms/_video-body.md).
+
+
+## WeChat 公众号 article fetch
+
+Stdlib HTTPS only. Fixed Chrome desktop UA. No cookies or profiles.
+
+```bash
+python3 skills/social-content-reader/scripts/fetch_wechat_article.py \
+  'https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw' --out-dir /tmp/gzh
+python3 skills/social-content-reader/scripts/acquire_media.py \
+  'https://mp.weixin.qq.com/s/aNmLs3qJVhFGcgtGxAVlig' --out-dir /tmp/gzh
+```
+
+Success JSON includes `body_text`, `body_chars`, `embeds[]` (`vid`, `player_url`).
+`--no-embed-media` skips the optional first-embed player attempt. `--html-file`
+parses offline HTML (unit tests / user export). Captcha / `环境异常` shells
+return `status: captcha_required`. See [platforms/wechat-article.md](../platforms/wechat-article.md).
 
 ## Douyin acquire
 

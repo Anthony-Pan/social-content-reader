@@ -3,3 +3,6 @@
 _tmp_asr_smoke.*
 *.wav
 !skills/**/fixtures/*.wav
+
+__pycache__/
+*.py[cod]
