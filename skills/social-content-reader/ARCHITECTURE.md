@@ -3,7 +3,7 @@
 Adapter pattern for social content understanding.
 
 ```text
-URL
+URL or local file
   │
   ▼
 ┌─────────────────┐
@@ -11,21 +11,28 @@ URL
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 2. Resolve path │  connector? → public caption/oEmbed/share text? → transcript?
+│ 2. Classify     │  video/graphics  vs  written post/article
+└────────┬────────┘
+         ▼
+┌──────────────────────────────┐
+│ 3a. Video: acquire local file │  platform helper (Douyin playwm), yt-dlp
+│     or honest acquire_failed  │  only where a file was saved, user file.
+└────────┬─────────────────────┘
+         ▼
+┌─────────────────┐
+│ 3b. Read media  │  frames → OCR → host vision → ASR or official transcript
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 3. Fetch        │  only documented / allowed methods
+│ 4. Normalize    │  speech + visuals. Caption is a side field, not the body.
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 4. Normalize    │  common ContentRecord schema
-└────────┬────────┘
-         ▼
-┌─────────────────┐
-│ 5. Understand   │  summarize / Q&A over body_text (caption, post, or transcript)
+│ 5. Understand   │  from pictures, burned-in text, and speech
 └─────────────────┘
 ```
+
+Written posts and articles (Reddit selftext, 公众号, X text, and similar) still fetch the written body. An attached video joins the media path. The shared steps live in [platforms/_video-body.md](platforms/_video-body.md).
 
 ## Platform detection (order matters)
 
@@ -70,35 +77,48 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
   "author": "...",
   "published_at": "2026-...",
   "language": "en",
-  "body_text": "full transcript or article body",
-  "body_kind": "transcript|article|post_text|caption|caption_only|unavailable",
-  "media_notes": "has video; transcript from captions",
-  "fetch_method": "host_connector|oembed|public_api|webfetch|public_webfetch|public_curl|user_paste|user_export|user_media_asr|blocked",
+  "body_text": "labeled join of visuals, OCR, and speech — or the article/post body",
+  "body_kind": "media_understanding|transcript|visual|article|post_text|unavailable",
+  "speech_text": "ASR or official transcript; empty when speech was not read",
+  "visual_text": "OCR of burned-in text; empty when OCR did not run or found nothing",
+  "visual_description": "host vision notes of the frames/video; empty when not looked at",
+  "caption": "share caption or description, metadata only",
+  "media_notes": "frame dir, ASR backend/model, OCR engine, truncation",
+  "fetch_method": "media_pipeline|host_connector|oembed|public_api|webfetch|public_webfetch|public_curl|user_paste|user_export|user_media_asr|acquire_failed|blocked",
   "confidence": "high|medium|low",
   "limits": ["..."]
 }
 ```
 
-## Path priority (every platform)
+`body_kind: caption` is not a successful video read. Older notes may still say `caption` or `caption_only`; treat those values as metadata, not Understanding.
 
-For user-supplied files, run the [ASR pipeline](SKILL.md#asr-pipeline) directly; a working remote URL is not required. A successful ASR record uses `body_kind: transcript`, copies ASR `text` into `body_text`, and records backend/model/language in `media_notes`. Platform-specific ordering takes precedence over the generic list below.
+`body_kind: media_understanding` requires evidence from the file: `visual_description` and/or `visual_text`, plus `speech_text` (or an explicit speech-only / picture-only kind instead). A share caption does not qualify.
 
-On Instagram, TikTok, Douyin, Threads, X, Facebook, and WeChat 视频号, a nonempty public caption or post text is a successful understand path. ASR is optional after that.
+`fetch_method: acquire_failed` means no local file and no official speech track. Say the video was not watched.
 
-1. **Host connector / MCP** already attached to the agent (best).
-2. **Official public API, oEmbed, or share-page text** (WebFetch). A nonempty caption or post text is enough to understand the post.
-3. **Transcript endpoints** when the platform publishes them (YouTube, Bilibili CC, Vimeo text tracks) or the user asked for spoken words.
-4. **User media + ASR** only when the user wants a spoken/verbatim transcript, or the caption is empty/useless.
-5. **Blocked**: stop. Do not invent scrapers that fight ToS or auth walls.
+## Path priority (every video)
 
-`caption` and `caption_only` both mean caption/description text. That text is enough for the Understanding section. It is not a spoken transcript. `webfetch` and `public_webfetch` both mean a host page-text fetch (WebFetch or equivalent). Prefer WebFetch over bare curl when the platform doc says curl returns a JS shell.
+Platform docs name the acquire tool that actually works. The shared order:
+
+1. **Platform acquire helper** when that platform’s doc makes it the default. Douyin: `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → mp4). Run it without asking the user to export.
+2. **A file the user already attached.** Read it. Do not ask for an export before step 1 has been tried.
+3. **yt-dlp** when the user asked to read the video and a run on that platform has saved a file (YouTube, Mac 2026-10-26). Stop on login, captcha, DRM, IP block, or HTTP 412. TikTok and Bilibili file download are not verified.
+4. **Host connector** when it returns a real transcript and/or permitted media. Official CC (YouTube, Bilibili, Vimeo text tracks) fills `speech_text` only.
+5. **Read the file:** `extract_frames.py` → `ocr_frames.py` → host vision/video tool → `asr_local.py` when speech is still missing.
+6. **Acquire failed:** stop. `body_kind: unavailable`. Do not substitute the share caption. User export is a fallback only after the documented player returns no media URL.
+
+For a file that is already on disk, start at step 5. A successful full read uses `body_kind: media_understanding` and `fetch_method: media_pipeline`. ASR-only is `transcript` / `user_media_asr` and must say graphics were not read.
+
+Written posts and articles use their platform fetch (connector, oEmbed text, public JSON, WebFetch). That text is the post. It does not describe an attached video.
+
+`webfetch` and `public_webfetch` both mean a host page-text fetch (WebFetch or equivalent).
 
 ## Runtimes
 
 - Skill docs live in-repo under `skills/social-content-reader/`.
-- Windows 24/7 is fine for heavy `codex exec` jobs. Mac and Linux fully support Codex skill load, fetch, and local ASR. See [INSTALL_OWN.md](../../INSTALL_OWN.md).
+- Windows 24/7 is fine for heavy `codex exec` jobs. Mac and Linux fully support Codex skill load, fetch, ffmpeg frames, and local ASR. See [INSTALL_OWN.md](../../INSTALL_OWN.md).
 - Keep secrets out of git; pass API keys via environment only when using official APIs.
 
 ## Extensibility
 
-New platform = new `platforms/<id>.md` + one row in `SKILL.md` matrix + URL patterns here + `normalize_url.py` detect branch. No need to change the normalize schema if `body_kind` / `limits` stay honest.
+New platform = new `platforms/<id>.md` + one row in `SKILL.md` matrix + URL patterns here + `normalize_url.py` detect branch. Video platforms point at `_video-body.md`. No need to change the normalize schema if `body_kind` / `limits` stay honest.

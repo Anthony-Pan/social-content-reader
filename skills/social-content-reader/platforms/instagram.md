@@ -1,6 +1,8 @@
 # Instagram
 
-**Status:** Works for understanding when a public caption or post text is available. Tokenless oEmbed often returns embed HTML only (no caption). Spoken ASR is optional: use it when the user wants verbatim speech, or the caption is empty/useless. Do not ask for a file before summarizing a caption you already have.
+**Status:** Media required for a Reel. oEmbed is an embed preview, not the video.
+
+Captions and embed previews do not establish what a Reel shows or says. Default success is the [shared video recipe](_video-body.md): a local file, frames, burned-in text, host vision, and ASR. Prefer an existing authorized host connector when it returns permitted media or a real transcript; a transcript alone is speech, not the picture.
 
 ## URL patterns
 
@@ -8,27 +10,25 @@
 - `https://www.instagram.com/reel/{code}/` (also `/reels/{code}/`)
 - `https://www.instagram.com/tv/{code}/`
 
-## Default path: caption or post text → understand
+## Video and graphics
 
-1. **Host connector** when it returns a real caption, post text, or transcript. Use that text as `body_text`.
-2. **Public oEmbed** for a preview of public posts. If the response includes the actual caption or post copy, store it as `body_text`, `body_kind: caption`, `fetch_method: oembed`, and write Understanding (claims, topic, tone) from it.
-3. The repository's [earlier smoke](../../../SMOKE_RESULTS.md) of tokenless `instagram_oembed` for `fA9uwTtkSN` returned embed HTML and provider fields only, with chrome text “View this post on Instagram”. That is not a caption. Set `body_kind: unavailable` for that response. Do not invent speech from stripped embed HTML.
-4. A nonempty caption is a successful understanding path. Finish the normalized record and the 5–12 line Understanding. Do not ask the user to save the Reel first.
+Follow [_video-body.md](_video-body.md). A pasted transcript fills `speech_text` (`body_kind: transcript`, `fetch_method: user_paste`) and must say graphics were not read unless frames were also supplied. A caption alone stays in `caption`.
 
-## Optional: spoken transcript
+## Reel understanding path (in order)
 
-Use this only when the user asks what was said verbatim, or step 2–3 produced no usable caption.
+1. **User-provided media:** Instagram Share → Download/Save video where offered, an official account export, or an authorized browser download. Menu wording and availability vary; a bookmark may only save a reference. Obtain an actual local audio/video file.
+2. **yt-dlp** when the user asked to read this Reel: `yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<reel url>"`. Stop on login or captcha. Do not extract browser cookies, request credentials, or use private API plugins. Other ToS-sensitive downloaders still need explicit approval for that URL.
+3. **On the local file**, run frames, OCR, host vision, and ASR:
 
-1. **User paste:** accept a transcript as `body_text`, `body_kind: transcript`, `fetch_method: user_paste`.
-2. **User-provided media:** Instagram Share → Download/Save video where offered, an official account export, or an authorized browser download. Menu wording varies; a bookmark alone may only save a reference. With an actual local audio/video file, run:
-
-   ```powershell
-   python skills/social-content-reader/scripts/asr_local.py --media "C:\Media\reel.mp4" --language auto --backend auto --model base
+   ```bash
+   python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/reel.mp4" --mode fps --fps 1 --max-frames 24
+   python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
+   python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/reel.mp4" --language auto --backend auto --model base
    ```
 
-   Mac / Linux: `python3` and `"$HOME/Media/reel.mp4"`. Resolve the script relative to `SKILL.md`. Check exit code and `ok`; copy JSON `text` into `body_text`, set `body_kind: transcript`, `fetch_method: user_media_asr`, and record backend/model/language in `media_notes`. See [ASR setup](../scripts/README.md).
-3. **Optional yt-dlp:** only if the user explicitly approved that download tool for **this exact URL**. A request to summarize a Reel is not download-tool permission. After approval, an example is `yt-dlp --no-playlist --output "reel.%(ext)s" "<approved Reel URL>"`; then ASR the saved file. Do not extract browser cookies, request credentials, use private API plugins, or retry behind login/captcha. yt-dlp is neither bundled nor the default path.
-4. **Official Instagram Graph API:** for user-owned or explicitly authorized Business/Creator accounts with required permissions. Retrieve only media the official API authorizes. If it supplies a permitted caption, understand that caption. If it supplies a permitted downloadable media URL and the user asked for speech, process the saved file with ASR. Do not imply arbitrary public Reels have transcripts in Graph API responses.
+   Windows: `py -3.12` and `C:\Media\reel.mp4`. Resolve helpers relative to `SKILL.md`. Check exit code and `ok`. Map ASR `text` to `speech_text`, OCR text to `visual_text`, and the host vision notes to `visual_description`. Set `body_kind: media_understanding` and `fetch_method: media_pipeline` when pictures and speech were both read. See [ASR setup](../scripts/README.md).
+4. **User paste of a transcript** is speech evidence only (`body_kind: transcript`). Ask for the file or screenshots when the question is about graphics.
+5. **Official Instagram Graph API:** for user-owned or explicitly authorized Business/Creator accounts with required permissions. Retrieve only media the official API authorizes for that account; if it supplies a permitted downloadable media URL, save the file and run the media pipeline. Do not imply arbitrary public Reels have transcripts in Graph API responses.
 
 ## Official account configuration (documentation only)
 
@@ -43,16 +43,17 @@ These are suggested integration names, **not variables consumed by `asr_local.py
 
 ## oEmbed honesty
 
-- oEmbed is a public embed/preview, not an analytics corpus. Observe [Meta's oEmbed terms and requirements](https://developers.facebook.com/docs/instagram-platform/oembed/).
-- Use caption text when the response actually contains it. Embed chrome with no caption is `body_kind: unavailable`, `fetch_method: oembed`.
+- oEmbed is for a front-end embed/basic preview, **not** transcript extraction or an analytics corpus. Observe [Meta's oEmbed terms and requirements](https://developers.facebook.com/docs/instagram-platform/oembed/).
+- The repository's [earlier smoke](../../../SMOKE_RESULTS.md) returned embed HTML/provider fields and **no speech transcript**. Do not infer speech from stripped embed HTML.
+- A missing file is `body_kind: unavailable` and `fetch_method: acquire_failed`. Store a separately provided caption in `caption` with `fetch_method: oembed` on that field's source note. Do not promote it to Understanding.
 - Authentication/version/rate requirements can change; no tokenless availability or quota guarantee is made here.
 
 ## Limits and stopping conditions
 
-No login bypass, captcha defeat, cookie theft/dumping, session hijack, DRM bypass, or unofficial private API scrapers. URL-only private/inactive/restricted posts and Stories have no supported general fetch path here. ASR covers speech, not silent visual actions or on-screen text; request screenshots/text when the user needs those and they are not in the caption. Never claim ASR/OCR that was not run.
+No login bypass, captcha defeat, cookie theft/dumping, session hijack, DRM bypass, or unofficial private API scrapers. URL-only private/inactive/restricted posts and Stories have no supported general fetch path here. An authorized user file or paste can still be understood regardless of its original share-link format. ASR covers speech, not silent visual actions or on-screen text; request screenshots/text when needed. Never claim ASR/OCR that was not run.
+
+If all you have is a link or a caption, the Reel was not watched. Ask for a file. If a file exists, run the media pipeline and report dependency errors instead of declaring the Reel unreadable.
 
 ## Success criteria
 
-- Nonempty public caption or post text → normalized record + Understanding, with no ask for a file.
-- Tokenless oEmbed that is only embed chrome → unavailable for that URL. ASR is then optional, not a demand before you report the gap.
-- Spoken transcript: ASR `ok: true` from user media, or a user-pasted transcript, only when that was the task.
+- `body_kind: media_understanding` after frames and speech were read, or `transcript` / `visual` with that gap stated. oEmbed alone is not success.

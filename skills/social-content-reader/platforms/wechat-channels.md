@@ -1,62 +1,64 @@
 # WeChat 视频号 (Channels)
 
-**Status:** Works for understanding from a public `weixin.qq.com/sph/<id>` share caption. WebFetch the share page, put the caption in `body_text`, and always write the Understanding section from that text. Spoken ASR is optional. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`).
+**Status:** Media required. `weixin.qq.com/sph/<id>` WebFetch can return a caption, date, and thumbnail. That text is metadata, not the video. Speech, burned-in text, and graphics need a local file and [the shared video recipe](_video-body.md). `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`).
 
 ## URL patterns
 
 - Share links (preferred): `https://weixin.qq.com/sph/<id>` and `https://www.weixin.qq.com/sph/<id>`.
   `normalize_url.py` sets `platform: wechat-channels`, `canonical_id` to the sph id, `canonical_url` to `https://weixin.qq.com/sph/<id>`, and `link_form: sph_share`.
-- `channels.weixin.qq.com` web/feed paths and in-app cards that are not sph share links. The [earlier network smoke](../../../SMOKE_RESULTS.md) got a homepage shell and feed response `errCode: 10012`, `errMsg: Illegal request`. Those responses contain no caption. Do not keep probing undocumented endpoints. Ask for an sph share URL when the user only has a feed link.
+- `channels.weixin.qq.com` web/feed paths and in-app 视频号 cards. These are not sph share links. The [earlier network smoke](../../../SMOKE_RESULTS.md) got a homepage shell and feed response `errCode: 10012`, `errMsg: Illegal request`. Those responses contain no video body or transcript. Do not keep probing undocumented endpoints.
 
-## Primary path: sph share caption → understand
+## Video and graphics
 
-For a typical 视频号 post, the share caption **is** the publishable copy. It is enough to understand what the video is about: claims, tips, and topic. Produce the Understanding section from that caption. Do not stop at "caption only", and do not ask the user to save media for "what is this about?".
+Default success is a local file: `extract_frames.py`, `ocr_frames.py`, the host vision/video tool, and `asr_local.py` ([_video-body.md](_video-body.md)). There is no general public 视频号 file URL and yt-dlp is not a working acquire path here. Ask the user to Save/export from WeChat, or to supply a file they already have. A share card, bookmark, sph link, or article embed is not a media file.
 
-**Recipe:** WebFetch `https://weixin.qq.com/sph/<id>` → `body_text` = caption, `body_kind: caption`, `fetch_method: webfetch` → Understanding (5–12 lines) from `body_text`.
+If the file cannot be acquired, set `body_kind: unavailable` and `fetch_method: acquire_failed` or `blocked`. Say the video was not watched. The sph caption may be stored in `caption` as a labeled side note. Do not summarize that caption as what the video shows or says.
 
-Prefer **WebFetch** (or another host fetch that extracts share-page text). Bare curl of the same URL is often a JS shell without the caption, so a curl shell is not proof the caption is missing. Do not use raw curl as the caption fetch.
+## Caption metadata from an sph share link
 
-Measured 2026-10-26: WebFetch of `https://weixin.qq.com/sph/AAZ3p39sQm` returned a Chinese caption about Codex token waste — brainstorm the task in ChatGPT first, then hand the conversation to Codex — plus date `2026年9月2日` and a thumbnail. That URL is the caption→understand example. Expected themes: Codex token waste; brainstorm in ChatGPT first.
+Prefer **WebFetch** (or another host fetch that returns page text) on the canonical `https://weixin.qq.com/sph/<id>` URL.
 
-On success:
+Measured 2026-10-26: WebFetch of `https://weixin.qq.com/sph/AAZ3p39sQm` returned caption/description text (about Codex token waste / ChatGPT brainstorm then Codex exec), date `2026年9月2日`, and a thumbnail. It did **not** return the spoken video body. Raw curl of the same URL often returns the SPA shell only, so a curl shell is not proof the caption is missing. Use WebFetch or an equivalent host fetch that returns page text.
 
-- `body_text`: the caption/description (include the visible date when present).
-- `body_kind: caption`
-- `fetch_method: webfetch` (ContentRecord alias `public_webfetch` — the same host page-text fetch, not a private API).
-- Keep the thumbnail URL in `media_notes` when it is useful. Do not download or decrypt the video.
-- **Understanding:** 5–12 lines from `body_text` covering what the post argues, the practical tip, and the topic. For `AAZ3p39sQm`, cover Codex token waste and brainstorming in ChatGPT before handing work to Codex.
-- `limits`: the record is the publishable caption, which is enough to understand the post. A spoken transcript was not requested. This label does not block the Understanding section.
+On a caption fetch (metadata only, not Understanding):
 
-If WebFetch returns only an empty shell or a useless caption, set `body_kind: unavailable` and `fetch_method: blocked` for that attempt. The optional speech path below applies only in that case, or when the user asks for spoken words. Do not rotate user agents, replay challenges, or call private APIs.
+- `caption`: the caption/description (include the visible date when present).
+- `body_kind` stays `unavailable` until a media file is read. Do not set `body_kind: caption` as a successful video read.
+- `fetch_method` for the caption note: `webfetch` (ContentRecord alias `public_webfetch` — the same host page-text fetch, not a private API). The video record stays `acquire_failed` / `blocked` until the file exists.
+- Keep the thumbnail URL in `media_notes` when it is useful. Do not pretend the thumbnail was watched as the video.
+- `limits`: state that the caption was not used as the video body.
 
-## Optional: spoken transcript (user media + ASR)
+If WebFetch returns only an empty shell, set `body_kind: unavailable` and `fetch_method: blocked` for that caption attempt, then continue with the speech path below. Do not rotate user agents, replay challenges, or call private APIs.
 
-ASR is not the default and is not required to answer what the video is about. Use it only when:
+## Read the file
 
-- the user asks for a spoken or verbatim transcript, or
-- the sph caption came back empty or useless.
+A caption is not the video. To understand what is shown and said:
 
-1. Accept a pasted transcript. Store supplied speech in `body_text`, `body_kind: transcript`, `fetch_method: user_paste`.
-2. Otherwise the user may share, export, or save an **actual video/audio file** with supported WeChat or creator controls. A share card, bookmark, sph link, or article that only embeds 视频号 is not a media file. Do not introduce unofficial downloaders.
-3. Run ASR on the local file.
+1. Accept a pasted transcript. Store supplied speech in `body_text`, `body_kind: transcript`, `fetch_method: user_paste`. On-screen text that is not speech stays caption or notes.
+2. Otherwise ask the user to share/export/save an **actual video/audio file** using supported WeChat/creator controls or an authorized browser workflow. A share card, bookmark, sph link, or article containing a 视频号 embed is not a media file. If no export is offered, ask for text or a user-provided authorized copy. Do not introduce unofficial downloaders.
+3. Run frames, OCR, and ASR on the local file. Describe the frames with the host vision tool.
 
    Windows:
 
    ```powershell
-   python skills/social-content-reader/scripts/asr_local.py --media "C:\Media\channels.mp4" --language zh --backend auto --model base
+   py -3.12 skills\social-content-reader\scripts\extract_frames.py --media "C:\Media\channels.mp4" --mode fps --fps 1 --max-frames 24
+   py -3.12 skills\social-content-reader\scripts\ocr_frames.py --frames-json frames.json
+   py -3.12 skills\social-content-reader\scripts\asr_local.py --media "C:\Media\channels.mp4" --language zh --backend auto --model base
    ```
 
    Mac / Linux:
 
    ```bash
+   python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/channels.mp4" --mode fps --fps 1 --max-frames 24
+   python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
    python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/channels.mp4" --language zh --backend auto --model base
    ```
 
    Resolve the helper relative to `SKILL.md` when installed elsewhere. Use `--language auto` for unknown speech language. See [setup and backend behavior](../scripts/README.md).
-4. Check exit code and `ok`. On success, copy JSON `text` into `body_text`, set `body_kind: transcript`, `fetch_method: user_media_asr`, and record backend/model/language plus speech-only limitations in `media_notes`/`limits`. Keep the original sph share URL when known; do not invent one for a file-only request.
-5. When the user asked about speech, summarize from the transcript. ASR is speech evidence; it does not establish visual details or guarantee perfect names/numbers. If both a WebFetch caption and a transcript exist, label which is which.
+4. Check exit codes and `ok`. Copy ASR JSON `text` into `speech_text`, OCR text into `visual_text`, and the host vision notes into `visual_description`. Set `body_kind: media_understanding` and `fetch_method: media_pipeline` when pictures and speech were both read. ASR alone is `body_kind: transcript` with a limit that graphics were not read. Record backend/model/language in `media_notes`/`limits`. Keep the original sph share URL when known; do not invent one for a file-only request.
+5. Summarize, translate, or answer from visuals + OCR + transcript. ASR does not establish silent visuals. A WebFetch caption may be quoted only as a labeled side note in `caption`.
 
-`channels.weixin.qq.com` feed URLs stay `fetch_method: blocked` / `body_kind: unavailable` for remote deep-read. Ask for an sph share link. A feed block is not a reason to demand a file when an sph URL is already in hand.
+`channels.weixin.qq.com` feed URLs stay `fetch_method: blocked` / `body_kind: unavailable` for remote deep-read. Ask for a media file or pasted speech. An sph link can add caption metadata; it does not replace the file.
 
 ## Creator 视频号助手 APIs (documentation only)
 
@@ -73,11 +75,10 @@ Names only: never commit or echo secrets. These are integration conventions, not
 
 ## Hard limits
 
-No login bypass, captcha defeat, cookie dumping/theft, private API scrapers, CDN decrypt scrapers, unofficial video downloaders, or third-party parser APIs (AnyFetcher, Tikomni, Evil0ctal-style, and similar). A nonempty sph caption is a successful understanding path. Local ASR is optional and only for spoken-verbatim or empty-caption cases. API ASR uploads require user authorization as described in the ASR pipeline.
+No login bypass, captcha defeat, cookie dumping/theft, private API scrapers, or reverse-engineering encrypted streams. Do not treat a caption, or a remote fetch failure, as proof that a user-provided video cannot be understood. Local ASR is preferred; API ASR uploads require user authorization as described in the ASR pipeline.
 
 ## Success criteria
 
-- sph URL only: WebFetch caption in `body_text` with `body_kind: caption` and `fetch_method: webfetch`, plus a 5–12 line Understanding. No ask for a file.
-- Example `https://weixin.qq.com/sph/AAZ3p39sQm`: understanding covers Codex token waste and brainstorming in ChatGPT first.
-- Spoken transcript: only when the user asks, or the caption is empty/useless (user media ASR `ok: true`, or a pasted transcript).
-- `channels.weixin.qq.com` feed paths: remain blocked (`errCode 10012`).
+- Video: local file read with frames and speech (`body_kind: media_understanding`), or an honest `transcript` / `visual` gap. A caption alone is not success.
+- sph share link: caption may be stored in `caption` via WebFetch. It is not `body_text` for the video.
+- `channels.weixin.qq.com` feed paths: remain blocked (`errCode 10012`). Ask for a file or pasted speech.
