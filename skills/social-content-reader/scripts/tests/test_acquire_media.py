@@ -20,10 +20,12 @@ class RouteTests(unittest.TestCase):
         self.assertEqual(a.route('https://www.threads.net/@nasa/post/ABC')[2], 'ABC')
         self.assertEqual(a.route('https://v.redd.it/gyh95hiqc0b11')[1], 'https://v.redd.it/gyh95hiqc0b11/DASHPlaylist.mpd')
 
-    def test_bilibili_preserves_requested_part(self):
-        self.assertIn('&p=2&', a.route('https://www.bilibili.com/video/BV17x411w7KC?p=2')[1])
-        with self.assertRaises(a.AcquireError):
-            a.route('https://www.bilibili.com/video/BV17x411w7KC?p=0')
+    def test_bilibili_never_silently_substitutes_part_one(self):
+        for part in ['0', '2', 'invalid']:
+            with self.subTest(part=part), self.assertRaises(a.AcquireError):
+                a.route('https://www.bilibili.com/video/BV17x411w7KC?p='+part)
+        self.assertEqual(a.route('https://www.bilibili.com/video/BV17x411w7KC?p=1')[1],
+                         'https://player.bilibili.com/player.html?bvid=BV17x411w7KC&autoplay=1')
 
     def test_host_confusion_private_invites_and_profiles_rejected(self):
         for url in ['https://tiktok.com.evil.test/@a/video/123', 'file:///etc/passwd',

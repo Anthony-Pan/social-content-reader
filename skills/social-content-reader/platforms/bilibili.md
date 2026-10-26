@@ -21,6 +21,8 @@ Main page/view API returned HTTP 412; the external player works for this sample.
 
 Evidence: [SMOKE_RESULTS.md](../../../SMOKE_RESULTS.md); local files and receipts in `~/Developer/scr-proof/matrix-2026-10-26/bilibili/`. A single public success is not universal platform access.
 
+Multipart `?p=2` and later parts are unverified and explicitly rejected, so the helper cannot silently substitute part 1.
+
 ## Read the media
 
 Follow [_video-body.md](_video-body.md): frames → OCR → host vision → official speech track or local ASR. A post caption, oEmbed title, description, thumbnail, chat or comment stream remains metadata. Only actual post/article text can be a written body; it does not stand in for an attached video.

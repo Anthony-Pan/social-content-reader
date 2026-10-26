@@ -51,7 +51,9 @@ No ASR/Understanding was claimed in this acquisition matrix.
   responses were fetched with the observed Origin/Referer/User-Agent and
   `Range: bytes=0-`. Complete Content-Range/body coverage was required, then
   AV1+AAC tracks were muxed locally (6,445,696 bytes, 199.319433 seconds). A
-  simple GET with different request headers returned 567, and a different
+  final canonical-player recheck with `--wait-seconds 12` saved the identical
+  SHA-256 again. Multipart parts after 1 remain unverified and are rejected
+  rather than silently substituted. A simple GET with different request headers returned 567, and a different
   sample played the site's 17-second error.mp4; neither counts as success.
 - Meta: public HTML carries matching post codes/ids and progressive media
   URLs. Instagram/Threads match `code` plus `video_versions`; Facebook matches

@@ -97,9 +97,9 @@ def route(url):
         if not m:
             raise AcquireError("use the resolved Bilibili BV URL")
         part = parse_qs(p.query).get("p", ["1"])[0]
-        if not part.isdigit() or int(part) < 1:
-            raise AcquireError("invalid Bilibili part number")
-        return "bilibili", f"https://player.bilibili.com/player.html?bvid={m[0]}&p={int(part)}&autoplay=1", m[0]
+        if part != "1":
+            raise AcquireError("Bilibili multipart acquisition is unverified; refusing to substitute part 1")
+        return "bilibili", f"https://player.bilibili.com/player.html?bvid={m[0]}&autoplay=1", m[0]
     if domain("t.me"):
         m = re.fullmatch(r"/(?:s/)?([A-Za-z][A-Za-z0-9_]+)/(\d+)/?", path)
         if not m:

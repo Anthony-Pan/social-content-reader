@@ -12,6 +12,7 @@ verification and Reddit post-resolution limits remain explicit.
 - TikTok uses its documented public embed. Bilibili observes media requests
   the public external player actually makes, preserves normal request headers,
   downloads the full unencrypted tracks, and muxes video+audio with ffmpeg.
+  Unverified Bilibili multipart requests are rejected instead of substituting part 1.
 - HTTP status alone never establishes success. ffprobe must find a positive
   duration and video stream. Complete HTTP 206 requires matching Content-Range
   and actual byte length; error.mp4 placeholders and HTML are rejected.
