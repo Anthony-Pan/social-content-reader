@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Acquire public social video; success requires a local, ffprobe-validated file.
+"""Acquire public social media or WeChat 公众号 article bodies.
 
-Fresh Playwright contexts only. No browser profiles, saved cookies, private API
+Video platforms: success requires a local, ffprobe-validated file. Fresh
+Playwright contexts only. No browser profiles, saved cookies, private API
 clients, challenge solving, or decryption. Captions never become a media result.
-See platforms/_video-body.md for dependencies, tested URLs, and current walls.
+WeChat 公众号 (mp.weixin.qq.com): delegates to fetch_wechat_article.py; article
+body success does not require ffmpeg. See platforms/_video-body.md and
+platforms/wechat-article.md.
 """
 from __future__ import annotations
 
@@ -307,10 +310,51 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
     platform = None
     try:
         platform, player, ident = route(url)
-        if not shutil.which("ffprobe") or not shutil.which("ffmpeg"):
-            raise AcquireError("ffprobe and ffmpeg are required to verify acquired media")
         out_dir = Path(out_dir).expanduser().resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
+        # 公众号 articles: body can succeed without ffmpeg. Embedded media is optional.
+        if platform == "wechat-article":
+            from fetch_wechat_article import fetch_article
+            result = fetch_article(player, out_dir=out_dir, try_embed_media=True)
+            if not result.get("ok"):
+                return {
+                    "ok": False,
+                    "platform": platform,
+                    "source_url": url,
+                    "error": result.get("error") or result.get("status") or "wechat article fetch failed",
+                    "status": result.get("status"),
+                    "body_kind": "unavailable",
+                    "fetch_method": result.get("fetch_method") or "acquire_failed",
+                }
+            # Article body is the primary success. Attach optional embed media if present.
+            payload = {
+                "ok": True,
+                "platform": platform,
+                "source_url": url,
+                "method": "wechat_article_https",
+                "body_kind": "article",
+                "fetch_method": result.get("fetch_method"),
+                "title": result.get("title"),
+                "author": result.get("author"),
+                "body_text": result.get("body_text"),
+                "body_chars": result.get("body_chars"),
+                "embeds": result.get("embeds") or [],
+                "embed_count": result.get("embed_count", 0),
+                "receipt_path": result.get("receipt_path"),
+            }
+            media = result.get("embed_media")
+            if isinstance(media, dict):
+                payload["embed_media"] = media
+                if media.get("ok") and media.get("path"):
+                    payload["path"] = media["path"]
+                    payload["bytes"] = media.get("bytes")
+                    payload["sha256"] = media.get("sha256")
+                    for k in ("duration_sec", "has_video", "has_audio", "codecs"):
+                        if k in media:
+                            payload[k] = media[k]
+            return payload
+        if not shutil.which("ffprobe") or not shutil.which("ffmpeg"):
+            raise AcquireError("ffprobe and ffmpeg are required to verify acquired media")
         with tempfile.TemporaryDirectory(prefix=".acquire-", dir=out_dir) as temp:
             work = Path(temp)
             if platform in ("youtube", "vimeo", "x") or (platform == "reddit" and ident):

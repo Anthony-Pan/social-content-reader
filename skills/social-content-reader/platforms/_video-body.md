@@ -107,4 +107,4 @@ accessible.** Verified sample files, byte counts and hashes are in
 | [Bilibili 哔哩哔哩](bilibili.md) | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
 | [小红书 / Xiaohongshu](xiaohongshu.md) | Public note page → playing video src (attempted) | NO; risk wall |
 | [WeChat 视频号](wechat-channels.md) | Public sph page → video src (attempted) | NO; QR / app-only page |
-| [WeChat 公众号](wechat-article.md) | Public article body / public embedded player | Current curl hit verification; historical WebFetch body success. Embedded video not verified. |
+| [WeChat 公众号](wechat-article.md) | Chrome UA HTTPS → `#js_content`; mpvideo embeds listed; optional public player | Body OK (v0.5.1). Embed media network-dependent; not Understanding without a file. |

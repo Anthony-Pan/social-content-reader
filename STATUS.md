@@ -1,57 +1,48 @@
 # STATUS — social-content-reader
 
-**Version:** 0.5.0
-**Updated:** 2026-10-26, Mac acquisition matrix
+**Version:** 0.5.1
+**Updated:** 2026-10-26 Asia/Shanghai — WeChat 公众号 harden
 
-All 16 platforms are listed again, with documented automatic attempts and
-explicit failures. **13 video platforms saved real sample media.** 小红书
-(IP-risk wall) and 视频号 (QR/app-only share surface) remain unsolved within
-the allowed public acquisition paths. 公众号's current article request hit
-verification; embedded media was not acquired. Reddit's public CDN file is
-verified, while arbitrary post-to-media resolution is still blocked.
+v0.5.0 saved **13** video-platform sample files; 小红书 and 视频号 remain
+blocked within allowed public paths. **v0.5.1** hardens 公众号 article
+acquire: Chrome desktop UA + stdlib HTTPS returns substantive `#js_content`
+(SSR `visibility:hidden;opacity:0` accepted). Embedded `mpvideo` vids are
+extracted; playable embed files remain best-effort / network-dependent.
+视频号 sph still has no public media URL.
 
-The full all-platform goal remains partially unmet; listing a platform is not
-a claim of unrestricted access or completed Understanding.
+Listing a platform is not a claim of unrestricted access or completed
+Understanding.
 
-## Shipped
+## Shipped (0.5.1)
 
-- `acquire_media.py`: public players / scoped yt-dlp routes, fresh contexts,
-  no user profile extraction; validated local files and SHA-256 receipts.
-- TikTok official embed, Bilibili external-player full-range tracks + local
-  mux, public Instagram/Threads/Facebook post-matched media, Telegram exact
-  widget, LinkedIn public video sources and Twitch clips. YouTube, Douyin,
-  Vimeo and independently known public Reddit CDN media are verified too.
-- Existing `acquire_douyin.py` now rejects HTTP errors/non-media using
-  ffprobe, removes partial files, and no longer hides webdriver. The normal
-  mobile player still saved its 8,382,047-byte sample after that change.
-- `smoke_acquire.py --platform NAME|--all --proof-dir DIR` replays opt-in
-  public samples and records PASS/FAIL. Does not run in the unit suite.
-- Media-first rule unchanged: captions/oEmbed/descriptions are metadata.
-  Files feed frames + OCR + host vision + speech; acquisition alone is not
-  Understanding. User export follows failed automatic paths as last resort.
+- `scripts/fetch_wechat_article.py`: stdlib HTTPS, fixed Chrome UA, substantive
+  body gate, captcha/`环境异常` rejection, mpvideo embed extraction, optional
+  first-embed media attempt. Article ok without ffmpeg.
+- `acquire_media.py` routes `mp.weixin.qq.com` → fetch_wechat_article.
+- Offline fixtures + unit tests for SSR body, captcha shell, display:none,
+  embed ids, and acquire wiring without ffmpeg.
+- Docs: `platforms/wechat-article.md`, this STATUS, SMOKE_RESULTS addendum,
+  HARDEN_NOTES, scripts/README, SKILL metadata `0.5.1`.
 
 ## Evidence
 
-[SMOKE_RESULTS.md](SMOKE_RESULTS.md) contains every source, file, byte count,
-stream limit and remaining wall. Local proof:
-`~/Developer/scr-proof/matrix-2026-10-26/` (`matrix.json`, PASS/FAIL notes,
-media, hashes, decoded frames and decode logs). All 13 counted files fully
-decoded without FFmpeg errors. Unit suite: 55 passed.
+- Matrix (video): [SMOKE_RESULTS.md](SMOKE_RESULTS.md) / Mac
+  `~/Developer/scr-proof/matrix-2026-10-26/`
+- 公众号 harden: `/workspace/scr-proof/wechat-gzh-2026-10-26/` (box) with live
+  receipts for Rsa + Anm articles.
+- Unit suite: run `python3 -m unittest discover -s skills/social-content-reader/scripts/tests`
 
 ## Remaining work
 
-- A legitimate public player or configured authorized media integration for
-  小红书 and 视频号; no successful general route is claimed.
-- Reddit post-to-media resolution on a network/account with permitted access.
-- Long Twitch VOD and 公众号 embedded-video live proof.
-- Speech/vision Understanding on newly acquired samples as requested; this
-  release run tests acquisition and decoding, not ASR quality.
+- 小红书 / 视频号: no successful general public media route.
+- 公众号 embed media: public player often returns 「视频不存在」 from some
+  networks; Mac historically saved one sample — not claimed universal.
+- Reddit post-to-media resolution; long Twitch VODs.
+- Speech/vision Understanding on acquired samples as requested.
 
 ## Locations
 
 - GitHub: https://github.com/Anthony-Pan/social-content-reader
 - Mac clone: `~/Developer/social-content-reader`
-- Mac installed skill: `~/.agents/skills/social-content-reader` points to
-  `skills/social-content-reader/` in this checkout.
 - Windows clone: `C:\Users\aw\source\repos\social-content-reader`
-- Existing ASR environment `.venv-asr/` preserved.
+- Box checkout: `/workspace/social-content-reader`

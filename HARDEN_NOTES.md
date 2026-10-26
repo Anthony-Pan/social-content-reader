@@ -1,3 +1,21 @@
+# v0.5.1 hardening — WeChat 公众号 (box, 2026-10-26 Asia/Shanghai)
+
+- New `fetch_wechat_article.py`: stdlib-only HTTPS GET with a fixed Chrome
+  desktop User-Agent. No cookies, profiles, captcha defeat, IP rotation, or
+  private APIs.
+- Substantive body gate (≥40 letters/digits/CJK) on `#js_content` /
+  `#js_article_content` / `.rich_media_content` / `[itemprop=articleBody]`.
+- Accept WeChat SSR `visibility:hidden;opacity:0` on `#js_content`; reject
+  `display:none` and `环境异常` / captcha shells (`captcha_required`).
+- Extract `mpvideo` iframe embeds (`action=mpvideo&vid=wxv_…`). Optional
+  first-embed media via public player when Playwright + acquire_media helpers
+  exist; article success is independent of embed media and ffmpeg.
+- `acquire_media.py` routes `wechat-article` before the ffmpeg requirement.
+- Live box smoke: Rsa + Anm bodies OK; Anm embed media unavailable on this
+  network; 视频号 still FAIL. See SMOKE_RESULTS v0.5.1 addendum.
+
+---
+
 # v0.5.0 hardening — Mac, 2026-10-26
 
 Automatic public media acquire now precedes user export. See
@@ -147,7 +165,7 @@ Implemented 2026-10-26 in the Windows repository. Changes are uncommitted; no co
 - No download/login behavior in the helper, no automatic package installation, no runtime fallback to cloud after inference fails, and no automatic API retry. API errors omit raw request/credential details. Oversized/unsupported API input is rejected before upload; empty speech is a failure.
 - `platforms/instagram.md`: ordered transcript → user export/file + ASR → explicitly approved per-URL yt-dlp → authorized Business/Creator Graph API route. oEmbed remains embed/metadata only. Official integration environment names are documented without secrets or a claimed API implementation.
 - `platforms/wechat-channels.md`: primary user file/paste → ASR → `body_text` route. Remote URL-only fetching remains blocked, including the historically observed `errCode 10012` response. Creator 视频号助手 integration environment names are documentation only.
-- `platforms/wechat-article.md`: public short-link WebFetch/curl recipe, browser-like UA, substantive-body checks, at most two extra transient-error retries (2/5 seconds), structured outcomes, and immediate user assistance on verification. Never invent a short ID from a long link's `sn`.
+- `platforms/wechat-article.md` + `scripts/fetch_wechat_article.py` (v0.5.1): Chrome UA HTTPS body, SSR visibility:hidden accepted, mpvideo embed extraction, optional embed media; captcha_required on 环境异常. Never invent a short ID from a long link's `sn`.
 - `SKILL.md`: metadata version `0.2.0`, local-file discovery, ASR pipeline, updated hard rules/matrix. Agent Skills YAML frontmatter + Markdown are retained.
 - `README.md`: v0.2.0 matrix/pipeline and updated layout. `ARCHITECTURE.md`: new fetch-method values and file-input routing. `scripts/README.md`: setup, CLI/JSON contract, API limits/conversion and verification commands.
 - `scripts/tests/test_asr_local.py`: standard-library behavior checks with stubs, no heavyweight testing dependency or real backend calls.
@@ -164,7 +182,7 @@ This table records the v0.2.0 harden. Current recipes are SKILL.md **0.4.0**: Un
 | X/Twitter | Partial | Public post text; thread/media limitations remain |
 | Instagram | Works with user media + ASR (oEmbed meta-only) | Actual user-provided speech file or pasted transcript |
 | WeChat 视频号 | Works with user media + ASR (remote fetch blocked) | Actual user-provided speech file or pasted transcript |
-| WeChat 公众号 | Partial (short-link WebFetch recipe) | Accessible `/s/<id>` article body; user action if verified/blocked |
+| WeChat 公众号 | Body OK via Chrome UA HTTPS (v0.5.1); embed media best-effort | Accessible `/s/<id>` `#js_content`; user action if verified/blocked; embed file not guaranteed |
 
 “Works with user media + ASR” describes the implemented route with dependencies configured. It is not a claim that real speech was transcribed on this machine during this release check.
 

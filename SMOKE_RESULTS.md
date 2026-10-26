@@ -1,5 +1,7 @@
 # v0.5.0 acquisition matrix — Mac, 2026-10-26
 
+> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai) below.**
+
 **Fresh live results:** 13 saved video files across 15 video platforms; 小红书
 and 视频号 did not yield media. 公众号 is an article platform: its current
 article fetch hit verification and embedded video was not acquired. Reddit's
@@ -38,7 +40,7 @@ No ASR/Understanding was claimed in this acquisition matrix.
 | bilibili | [BV17x411w7KC](https://www.bilibili.com/video/BV17x411w7KC); browser_media_tracks | `bilibili/bilibili_ee02d4fb68da3725.mp4` | 6445696 | 199.319433 | yes | Main/view API HTTP 412. External player works for valid sample. error.mp4 for BV1GJ411x7h7 rejected. |
 | xiaohongshu | [6411cf99000000001300b6d9](https://www.xiaohongshu.com/explore/6411cf99000000001300b6d9); public page attempt | **FAIL** | — | — | — | Two public notes returned IP-risk 300031/300012; stopped. |
 | wechat-channels | [AAZ3p39sQm](https://weixin.qq.com/sph/AAZ3p39sQm); public page attempt | **FAIL** | — | — | — | sph page has caption/QR but no video; no compliant public auto-acquire established. |
-| wechat-article | [Rsa54LdbyhXIHheJYO6gkw](https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw); public page attempt | **FAIL** | — | — | — | Current curl verification page; no js_content; no embedded media. Historical WebFetch body success is not this run. |
+| wechat-article | [Rsa54LdbyhXIHheJYO6gkw](https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw); Chrome UA HTTPS body (v0.5.1) | **BODY OK** (article) | — | — | — | v0.5.0 bare-UA verification FAIL superseded by v0.5.1 Chrome UA body. Embeds: see Anm addendum. |
 
 ## What changed the hard-wall outcomes
 
@@ -270,3 +272,26 @@ Measured on Anthony’s Mac, same day. Document only what saved a file.
 - Harden 公众号 recipe with structured `ok | captcha_required | rate_limited` statuses
 - Add X thread-walk recipe test
 - Document IG oEmbed response shape (no caption field in v26 tokenless response observed tonight)
+
+---
+
+# v0.5.1 addendum — WeChat 公众号 harden (box, 2026-10-26 Asia/Shanghai)
+
+Helper: `skills/social-content-reader/scripts/fetch_wechat_article.py` (stdlib
+HTTPS, fixed Chrome desktop UA, no cookies/profiles). Wired through
+`acquire_media.py` for `mp.weixin.qq.com` (article body may succeed without
+ffmpeg).
+
+Proof: `/workspace/scr-proof/wechat-gzh-2026-10-26/`.
+
+| Sample | Result | Notes |
+| --- | --- | --- |
+| [Rsa54Ld…](https://mp.weixin.qq.com/s/Rsa54LdbyhXIHheJYO6gkw) | **BODY OK** | Title 一个错误，让我客户痛苦失去200万; substantive `#js_content` (~1500+ chars); SSR `visibility:hidden;opacity:0` accepted. No embeds. |
+| [aNmLs3…](https://mp.weixin.qq.com/s/aNmLs3qJVhFGcgtGxAVlig) | **BODY OK** + embeds listed | Title 这，才是下一个5年的工作操作系统; 3 mpvideo vids `wxv_4683490097843765252`, `wxv_4683473112590647297`, `wxv_4683357298663309319`. |
+| Anm first embed public player | **MEDIA FAIL** (this box) | Player UI: 「当前视频不存在，暂无法观看」; `get_mp_video_play_url` returns empty. Mac earlier saved one ~2.8MB public embed mp4 — not reproduced here. Article still OK. |
+| [sph AAZ3…](https://weixin.qq.com/sph/AAZ3p39sQm) 视频号 | **FAIL** (unchanged) | No public media URL; QR/app-only. |
+
+Hard rules unchanged: no captcha defeat, IP rotation, stolen cookies, private
+APIs, or CDN decrypt. Captions remain metadata; Understanding needs a real
+media file for video.
+

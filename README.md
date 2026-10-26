@@ -2,11 +2,12 @@
 
 **Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.5.0** adds automatic acquisition through public players and validated
-local files. TikTok's official embed and Bilibili's external player now save
-media on this Mac. LinkedIn, 小红书, Telegram and Twitch are listed again, with
-their actual success or remaining wall. User export is last resort after the
-documented automatic path fails. Captions remain metadata (the v0.4 rule).
+Version **0.5.1** hardens WeChat 公众号 article acquire (Chrome UA HTTPS →
+substantive `#js_content`; mpvideo embeds listed; embed media best-effort).
+v0.5.0 added automatic acquisition through public players and validated local
+files (13 video platforms). LinkedIn, 小红书, Telegram and Twitch remain listed
+with their actual success or wall. 视频号 still has no public media URL.
+Captions remain metadata.
 
 Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
