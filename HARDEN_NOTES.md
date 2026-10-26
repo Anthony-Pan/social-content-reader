@@ -1,3 +1,37 @@
+# social-content-reader v0.4.0 media-first notes
+
+Updated 2026-10-26.
+
+## What changed
+
+Video Understanding now requires a local media file (or an official speech track **plus** frames when graphics are in scope). Helpers:
+
+- `scripts/extract_frames.py` — ffmpeg `--mode fps` or `--mode scene`. JSON frame paths and timestamps. Refuses URLs.
+- `scripts/ocr_frames.py` — Tesseract when installed; macOS Vision via `ocr_vision.swift` when `swiftc` is available. `engine: none` when neither exists. Does not invent text.
+- `platforms/_video-body.md` — shared acquire + read recipe. Platform docs point here. Captions stay metadata.
+- Skill version **0.4.0**. `normalize_url.py` and `asr_local.py` kept.
+
+`yt-dlp` is documented as a public acquire CLI when the user asked to read the video. No cookie theft, login bypass, captcha defeat, CDN decrypt, or private API client was added.
+
+## Douyin acquire (2026-10-26)
+
+Share `https://v.douyin.com/2qulGbSTiRI/` → aweme **7696098282904259850**.
+
+Two different pages:
+
+- **iesdouyin / desktop curl.** Redirects `v.douyin.com` → `www.iesdouyin.com/share/video/7696098282904259850/` → `www.douyin.com/video/7696098282904259850`. Datacenter curl returns a JavaScript shell. That share surface often says **「请尝试在抖音内观看」**. It is not the player.
+- **Working path (Mac).** `scripts/acquire_douyin.py`. Playwright Chromium, mobile UA. Open `https://www.douyin.com/` for cookies in that browser, then `https://m.douyin.com/share/video/7696098282904259850`. Read `<video>.src` / `currentSrc` (`https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`). GET it with the same context and `Referer` = the share page. Follows to a CDN `video/mp4` (~8MB, 1280×720, H.264+AAC, ~49s). Then `extract_frames.py`, `asr_local.py`, and the host video tool.
+
+Default goal is that automatic file. User export is the fallback only when the mobile share page has no `<video>` src. The helper does not write cookies to disk, solve captchas, or return a caption as the body. A share caption is not a substitute.
+
+## Tests
+
+`python3 -B -m unittest discover -s skills/social-content-reader/scripts/tests -v`
+
+Includes a generated lavfi sample (testsrc plus a red/blue scene cut) when ffmpeg is on PATH. GitHub Actions (`.github/workflows/tests.yml`) installs ffmpeg and runs the same suite. OCR tests stub Tesseract and assert a missing engine returns `ok: false`.
+
+---
+
 # social-content-reader v0.3.0 hardening notes
 
 Updated 2026-10-26 ~15:35 Asia/Shanghai.

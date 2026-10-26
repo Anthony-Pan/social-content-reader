@@ -1,0 +1,4 @@
+# Optional. Douyin mobile-share acquire only.
+# After install, download the browser once:
+#   python3 -m playwright install chromium
+playwright>=1.40

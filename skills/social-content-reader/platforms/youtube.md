@@ -1,8 +1,8 @@
 # YouTube
 
-**Status:** ✅ Works (for videos with captions / accessible transcripts)
+**Status:** Works when speech (official transcript or ASR) **and** frames are read. The description is not the video.
 
-**Goal:** Understand what the video *says*, not what the description claims.
+**Goal:** Read what the video shows and what is spoken. Follow [the shared video recipe](_video-body.md).
 
 ## URL patterns
 
@@ -12,34 +12,40 @@
 - `https://www.youtube.com/live/VIDEO_ID`
 - bare 11-char video id
 
+## Video and graphics
+
+Official caption tracks are **speech**, not the picture. Default video Understanding also extracts frames and reads burned-in text and graphics ([_video-body.md](_video-body.md)). The description and chapter blurbs stay in `caption`. Do not write Understanding from the description.
+
 ## Prefer (in order)
 
-1. **Host YouTube connector / transcript MCP** if the agent already has one (e.g. TubeAlfred-style research tools, `@captapi/mcp`, `ytapi` MCP, `mcp-youtube`). Use transcript tools first; metadata second.
-2. **Codex on Windows** running a transcript fetch in this repo when no connector is present.
-3. **Official YouTube Data API v3** for metadata only (`videos.list`) — **does not return transcript text**. Never stop at description.
-4. If no captions exist: ask the user, or use a user-approved speech-to-text path on audio they authorize — do not silently invent dialogue.
+1. **Host YouTube connector / transcript MCP** if the agent already has one (e.g. TubeAlfred-style research tools, `@captapi/mcp`, `ytapi` MCP, `mcp-youtube`). Use it for **speech**. Still acquire frames for graphics unless the connector already returned frame descriptions you actually looked at.
+2. **yt-dlp** when the user asked to read the video, then `extract_frames.py`, `ocr_frames.py`, host vision, and `asr_local.py` (ASR only if no official transcript). Stop on age-gate, login, or DRM.
+3. **Official YouTube Data API v3** for metadata only (`videos.list`). It does not return transcript text or frames.
+4. If no captions and no media file: `body_kind: unavailable`. Ask for a file or an authorized transcript. Do not invent speech or graphics from the description.
 
 ## Fetch recipe
 
 1. Normalize to `VIDEO_ID` (`scripts/normalize_url.py` or regex).
-2. Fetch **transcript / captions** (manual track preferred over auto-generated when both exist).
-3. Optionally fetch metadata (title, channel, duration, publish date).
-4. Set `body_kind: transcript`, `body_text` = full caption text (truncate with clear note if huge).
-5. Summarize from transcript: main claim, chapters/topics, notable quotes with timestamps when available.
+2. Fetch the **transcript** (manual track preferred over auto-generated when both exist) into `speech_text`.
+3. Acquire the file when graphics matter (they do for default video Understanding) and run `extract_frames.py` + OCR + host vision.
+4. Metadata (title, channel, duration, publish date) is fine alongside the media read. Description → `caption`.
+5. Set `body_kind: media_understanding` when pictures and speech were both read. A transcript with no frames is `body_kind: transcript` and must say graphics were not read.
+6. Summarize from speech + visuals. Note auto-caption uncertainty. Quote timestamps from transcript cues or frame `timestamp_sec`.
 
 ## Honest limits
 
 - Private, members-only, age-gated, or caption-disabled videos → unavailable.
-- YouTube Data API alone ≠ understanding.
+- YouTube Data API alone is not understanding. The description is not the body.
 - Third-party transcript APIs may be paid; do not hardcode keys in the skill.
 - Auto-captions can be wrong — say “based on auto captions” when relevant.
+- `yt-dlp` is the documented public acquire CLI when the user asked to read the file. No cookie theft or age-gate bypass.
 
 ## Codex prompt sketch
 
 ```text
-Follow platforms/youtube.md. URL: <URL>
-Return ContentRecord JSON + 8-line understanding summary from the transcript.
-If no transcript, stop and list options (user paste / STT) — do not guess spoken content from the description.
+Follow platforms/youtube.md and platforms/_video-body.md. URL: <URL>
+Speech from the official transcript when it exists; frames + OCR + vision for graphics.
+Description is metadata. If the file and the transcript are both missing, say the video was not watched.
 ```
 
 ## References
@@ -49,5 +55,5 @@ If no transcript, stop and list options (user paste / STT) — do not guess spok
 
 ## Success criteria
 
-- `body_kind: transcript` with nonempty caption/ASR text, **or** honest `unavailable` if no captions and no user media.
-- Never claim understanding from description alone.
+- `body_kind: media_understanding` when speech and frames were both read, **or** `transcript` / `visual` with that gap stated, **or** honest `unavailable`.
+- Never claim the picture or the speech from the description alone.

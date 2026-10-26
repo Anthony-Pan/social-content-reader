@@ -1,6 +1,6 @@
 # LinkedIn
 
-**Status:** Deferred this release. Partial — public post text sometimes available; most deep content needs user paste or authorized API. The v0.3.2 caption→understand default was not applied here.
+**Status:** Partial — public post text sometimes available; most deep content needs user paste or an authorized API. Native video needs a media file.
 
 ## URL patterns
 
@@ -8,13 +8,17 @@
 - `https://www.linkedin.com/feed/update/urn:li:activity:{id}`
 - `https://www.linkedin.com/pulse/{slug}` (articles)
 
+## Video and graphics
+
+A pasted or authorized post/article is `body_kind: post_text` or `article`. That text is the post, not a video. Native video follows [_video-body.md](_video-body.md) after the user supplies a file or `yt-dlp` downloads a public URL they asked to read, without a login bypass. If acquire fails, say the video was not watched. An Open Graph title is not Understanding.
+
 ## Prefer (in order)
 
 1. **Host LinkedIn connector** with user-authorized OAuth (Marketing / Community Management APIs as licensed).
 2. **User paste** of the post or article (most reliable for agents without OAuth).
 3. **WebFetch** of a *public* post/article URL — only use visible text if the page returns it without login. Many posts redirect to login → stop and ask for paste.
 4. Pulse articles: try public WebFetch; if paywall/login, ask for export/paste.
-5. Video posts: user media + ASR.
+5. Video posts: the [media pipeline](_video-body.md) on a local file. The post blurb is `caption`, not the video.
 
 ## Fetch recipe
 

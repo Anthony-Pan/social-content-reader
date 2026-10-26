@@ -13,7 +13,8 @@
 | X / Twitter | ✅ partial | host `x` MCP `get_posts_by_id` + `publish.twitter.com/oembed` | Post `2112722684710719913` (@X) text+metrics; oEmbed HTML OK; thread/media still limited |
 | Instagram | ⚠️ partial / deep-read blocked | Meta `graph.facebook.com/v26.0/instagram_oembed` | Real post `fA9uwTtkSN` → embed HTML only (`html`,`provider_*`,`type`,`width`); **no** caption/transcript fields; speech understanding blocked |
 | WeChat 公众号 | ⚠️ partial | WebFetch vs raw curl | Short URL `…/s/Rsa54LdbyhXIHheJYO6gkw` → full article body via WebFetch; raw datacenter `curl` often `未知错误`/redirect — captcha/UA walls real |
-| WeChat 视频号 | ✅ caption → understand | sph WebFetch; feed host still blocked | `…/sph/AAZ3p39sQm` WebFetch caption (Codex token waste; brainstorm in ChatGPT first) is enough to understand the post — addendum §8. Feed path still `errCode 10012` |
+| WeChat 视频号 | ⚠️ caption metadata only | sph WebFetch caption; `channels.weixin.qq.com` feed blocked | Feed path `errCode 10012` (no transcript). Sph share `…/sph/AAZ3p39sQm` WebFetch returns caption/date/thumbnail, not the video — addendum §7 |
+| Douyin | ⚠️ iesdouyin curl blocked; Mac player worked | curl of the short link; separate Mac Playwright run | Share `v.douyin.com/2qulGbSTiRI` → aweme `7696098282904259850`. iesdouyin curl is a JS shell / in-app wall. Mobile share after homepage cookies played — addendum §8 |
 
 ## Detail
 
@@ -28,7 +29,7 @@ Command: `python3 skills/social-content-reader/scripts/normalize_url.py <url>`
 | `https://www.instagram.com/reel/C123abcDEF/` | instagram | kind=`reel`, id=`C123abcDEF` |
 | `https://mp.weixin.qq.com/s/AbCdEfGhIjKlMnOp` | wechat-article | short form |
 | `https://channels.weixin.qq.com/web/pages/live?finderUsername=test` | wechat-channels | limits: no general public consumer fetch |
-| `https://weixin.qq.com/sph/AAZ3p39sQm` | wechat-channels | `canonical_id` `AAZ3p39sQm`, `link_form` `sph_share`, canonical `https://weixin.qq.com/sph/AAZ3p39sQm` (caption→understand example; addendum §8) |
+| `https://weixin.qq.com/sph/AAZ3p39sQm` | wechat-channels | `canonical_id` `AAZ3p39sQm`, `link_form` `sph_share`, canonical `https://weixin.qq.com/sph/AAZ3p39sQm` (v0.3.1; see addendum) |
 | `https://www.weixin.qq.com/sph/AAZ3p39sQm` | wechat-channels | same canonical id/url; `www` stripped |
 | bare `dQw4w9WgXcQ` | youtube | OK |
 
@@ -86,28 +87,54 @@ python3 skills/social-content-reader/scripts/normalize_url.py 'https://weixin.qq
 
 Expected: `platform` `wechat-channels`, `canonical_id` `AAZ3p39sQm`, `canonical_url` `https://weixin.qq.com/sph/AAZ3p39sQm`, `link_form` `sph_share`. `www.weixin.qq.com` normalizes to the same canonical URL. `channels.weixin.qq.com` stays `wechat-channels` and does not pick up `sph_share`. Covered by `scripts/tests/test_normalize_url.py`.
 
-WebFetch (measured): `https://weixin.qq.com/sph/AAZ3p39sQm` returns caption/description text (about Codex token waste / ChatGPT brainstorm then Codex exec), date `2026年9月2日`, and a thumbnail. Raw curl of the same URL often returns the SPA shell only. v0.3.1 recorded this as caption-not-speech. v0.3.2 treats that same caption as the understanding body; see §8.
+WebFetch (measured, do not treat as speech): `https://weixin.qq.com/sph/AAZ3p39sQm` returns caption/description text (about Codex token waste / ChatGPT brainstorm then Codex exec), date `2026年9月2日`, and a thumbnail. It does **not** return the spoken video body. Raw curl of the same URL often returns the SPA shell only. Recipe: WebFetch → `body_kind: caption`, `fetch_method: webfetch`. Spoken understanding still requires user media + `asr_local.py`.
 
 `channels.weixin.qq.com` feed paths remain blocked (`errCode 10012`) for remote deep-read. No login bypass.
 
-- **Result:** normalize pass for sph share links; caption WebFetch measured. Product reading of that caption moved to §8 in v0.3.2.
+- **Result:** normalize pass for sph share links; caption WebFetch is metadata only (v0.4.0). Speech and graphics still need a local file. A caption is not Understanding.
 
-### 8. Addendum (2026-10-26, v0.3.2) — sph caption → understand
+### 8. Addendum (2026-10-26, v0.4.0) — Douyin in-app wall
 
-Doc/unit smoke (no network in the test): `scripts/tests/test_normalize_url.py` pins `SPH_CAPTION_UNDERSTAND_EXAMPLE` for `https://weixin.qq.com/sph/AAZ3p39sQm`.
+Video **7696098282904259850**, share `https://v.douyin.com/2qulGbSTiRI`.
 
-- Normalize: `platform` `wechat-channels`, `canonical_id` `AAZ3p39sQm`, `link_form` `sph_share`. Limit text says the sph caption is enough to understand the post.
-- Expected themes from the measured WebFetch caption: **Codex token waste**; **brainstorm in ChatGPT first** (then hand the conversation to Codex). Date on the share page: `2026年9月2日`. Thumbnail present.
-- Default recipe: WebFetch (not bare curl) → `body_text` = caption, `body_kind: caption`, `fetch_method: webfetch` → 5–12 line Understanding. No ask for a user media file.
-- ASR stays optional for a spoken transcript, or if a future fetch returns an empty caption.
-- `channels.weixin.qq.com` feed `errCode 10012` is unchanged. No unofficial downloader, CDN decrypt, or third-party parser API was used.
+Public redirect chain measured from this environment (browser UA, no cookies, no login bypass):
 
-- **Result:** caption → understand for this sph URL. Feed host remains blocked.
+1. `https://v.douyin.com/2qulGbSTiRI` → 302
+2. `https://www.iesdouyin.com/share/video/7696098282904259850/...` → 302
+3. `https://www.douyin.com/video/7696098282904259850?previous_page=app_code_link`
+
+The final body is a JavaScript shell (about 73KB). It is not a media file and not a transcript. The raw shell does not contain the spoken or visual body. The client-rendered share page for this video shows **「请尝试在抖音内观看」** (in-app watch wall). Web playback is not available from this fetch.
+
+That curl is not the player. iesdouyin share pages often show **「请尝试在抖音内观看」**. Do not treat this shell as proof the video cannot be acquired, and do not treat a caption as Understanding.
+
+No captcha solve, cookie dump, CDN decrypt, or private API call was attempted on this curl.
+
+- **Result:** iesdouyin/datacenter curl has no media file. See §9 for the player that worked.
+
+### 9. Addendum (2026-10-26, v0.4.0) — Douyin mobile share player
+
+Same video: `https://v.douyin.com/2qulGbSTiRI/` → aweme **7696098282904259850**.
+
+Measured on **Mac** (not this datacenter curl):
+
+1. Playwright Chromium, mobile user agent.
+2. Open `https://www.douyin.com/` so that browser receives cookies.
+3. Open `https://m.douyin.com/share/video/7696098282904259850`.
+4. `<video>.src` / `currentSrc` is `https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`.
+5. GET that playwm URL with the same browser context and `Referer` set to the share page. It follows to a CDN response `video/mp4`.
+
+Saved file: about **8MB**, **1280×720**, H.264 + AAC, about **49 seconds**.
+
+Next step is the media pipeline (`extract_frames.py`, `ocr_frames.py`, `asr_local.py`, host vision / watch the file). The share caption is not the body.
+
+Helper: `skills/social-content-reader/scripts/acquire_douyin.py`. It does not ask the user to export first. If the mobile share page has no `<video>` src, it returns `acquired: false` and says the caption was not used.
+
+- **Result:** automatic playwm acquire worked for this aweme on Mac, 2026-10-26. iesdouyin curl remains a non-player.
 
 ## Honesty notes
 
 - No captcha solving, cookie dumps, or login bypass.
-- Instagram oEmbed on `fA9uwTtkSN` confirmed embed chrome with no caption field. That URL has nothing to summarize. When a real caption or post text is present, understand it; do not require a user file first. Spoken-verbatim still needs a transcript or optional ASR.
+- Instagram oEmbed used only to confirm embed-preview capability; skill must still refuse “what are they saying in the Reel?” without user transcript.
 - 公众号 success via WebFetch does not imply every article works from every IP.
 
 ## Follow-ups (optional, not blockers for v0 publish)

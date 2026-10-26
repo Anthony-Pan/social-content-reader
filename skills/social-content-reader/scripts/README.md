@@ -5,6 +5,9 @@ Small URL/ASR helpers; no platform downloader, login automation, or private API 
 | Script | Purpose |
 | --- | --- |
 | `normalize_url.py` | Detect platform + canonical id/url from a link (no network) |
+| `acquire_douyin.py` | Save a Douyin mp4 from the mobile share `<video>` playwm URL (Playwright). No caption body. |
+| `extract_frames.py` | ffmpeg keyframes (`--mode fps` or `--mode scene`); JSON with paths and `timestamp_sec`. No URL download. |
+| `ocr_frames.py` | OCR local frames with tesseract, or macOS Vision (`ocr_vision.swift`) when `swiftc` exists. `engine: none` if neither is installed. |
 | `asr_local.py` | Transcribe a user-provided audio/video file using local Whisper or the official OpenAI Whisper API; JSON stdout |
 
 Run:
@@ -19,7 +22,50 @@ python skills\social-content-reader\scripts\normalize_url.py "https://youtu.be/d
 
 `weixin.qq.com/sph/<id>` (optional `www`) returns `platform: wechat-channels`, `link_form: sph_share`, and `canonical_url: https://weixin.qq.com/sph/<id>`. `channels.weixin.qq.com` stays `wechat-channels` without an sph id.
 
-Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder.
+Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder. Video Understanding uses `extract_frames.py` + `ocr_frames.py` + the host vision tool + `asr_local.py`. See [platforms/_video-body.md](../platforms/_video-body.md).
+
+## Douyin acquire
+
+Optional Playwright path. It does not read the share caption.
+
+```bash
+python3 -m pip install playwright && python3 -m playwright install chromium
+python3 skills/social-content-reader/scripts/acquire_douyin.py --url "https://v.douyin.com/2qulGbSTiRI/" --out-dir "$HOME/Media"
+```
+
+The helper visits `https://www.douyin.com/` in Chromium (mobile UA), then `https://m.douyin.com/share/video/{aweme_id}`, reads the `<video>` playwm URL, and downloads it with that browser's cookies and the share page as Referer. Success is `acquired: true` plus `{aweme_id}.mp4`. iesdouyin pages that say 「请尝试在抖音内观看」 are not this player. If the mobile page has no video src, the JSON error says so and `caption_used_as_body` stays false.
+
+Windows: `py -3.12 -m pip install playwright` then `py -3.12 -m playwright install chromium`.
+
+## Frames
+
+Requires `ffmpeg` and `ffprobe` on PATH. Refuses `http://` / `https://` inputs.
+
+```bash
+python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/clip.mp4" --mode fps --fps 1 --max-frames 24 --out-dir /tmp/scr-frames
+python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/clip.mp4" --mode scene --scene-threshold 0.3 --max-frames 24
+```
+
+```powershell
+py -3.12 skills\social-content-reader\scripts\extract_frames.py --media "C:\Media\clip.mp4" --mode fps --fps 1 --max-frames 24
+```
+
+`--mode fps` samples evenly. `--mode scene` keeps the first frame plus scene changes. `--max-frames` defaults to 24 (1–300). When the cap is hit, `truncated` is true. `--out-dir` must not already contain `frame_*.jpg`; the default is a new temp directory. Stdout is one JSON object: `ok`, `frames[].path`, `frames[].timestamp_sec`, `duration_sec`, `error`.
+
+macOS: `brew install ffmpeg`. Windows: `winget install --id Gyan.FFmpeg --exact`. Linux: the distro ffmpeg package.
+
+## OCR
+
+Optional. Missing engines exit 1 with `ok: false`, `engine: none`, and install hints. Empty OCR text with `ok: true` means the engine ran and found no burned-in words.
+
+```bash
+python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
+python3 skills/social-content-reader/scripts/ocr_frames.py --dir /tmp/scr-frames --lang chi_sim+eng
+```
+
+Tesseract languages fall back from `chi_sim+eng` to `eng` when Chinese data is not installed. macOS Vision: `--engine vision` compiles `ocr_vision.swift` with `swiftc` (Xcode). The host agent's vision tool is still required for a description of the picture; OCR is only the burned-in string.
+
+macOS: `brew install tesseract tesseract-lang`. Windows: `winget install --id UB-Mannheim.TesseractOCR --exact`. Linux: `tesseract-ocr` and, for Chinese, `tesseract-ocr-chi-sim`.
 
 ## ASR usage and output
 
@@ -45,7 +91,7 @@ Example result (illustrative, not a recorded transcription):
 {"ok": true, "text": "Hello from the video.", "language": "en", "backend": "faster-whisper", "model": "base", "media_path": "C:\\Media\\reel.mp4"}
 ```
 
-Check exit code 0 and `ok: true`, then map `text` → `body_text`, `body_kind: transcript`, `fetch_method: user_media_asr`. Record language/backend/model and speech-only limitations. ASR does not extract silent visuals or guarantee exact names/numbers. Empty transcription fails instead of pretending the caption is speech.
+Check exit code 0 and `ok: true`, then map `text` → `speech_text`. Together with frames, OCR, and host vision this is `body_kind: media_understanding`, `fetch_method: media_pipeline`. ASR alone is `body_kind: transcript`, `fetch_method: user_media_asr`, and the record must say graphics were not read. Record language/backend/model. ASR does not extract silent visuals or guarantee exact names/numbers. Empty transcription fails. Do not copy the share caption into `speech_text`.
 
 Operational failures return the same keys, `ok: false`, an `error`, and exit code 1. Missing files, empty files, missing dependencies/ffmpeg, unsupported API formats, oversized API uploads and backend errors are actionable failures. Help uses normal CLI text/exit 0; invalid arguments use argparse diagnostics/exit 2. Diagnostics/progress go to stderr; operational stdout is one ASCII-safe JSON object (Unicode text round-trips through JSON decoding on Windows).
 

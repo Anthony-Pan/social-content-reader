@@ -1,6 +1,6 @@
 # Vimeo
 
-**Status:** ✅ Works when captions/text tracks exist; otherwise metadata + user media ASR.
+**Status:** Works when text tracks or a media file are read. The oEmbed description is not the video.
 
 ## URL patterns
 
@@ -8,22 +8,25 @@
 - `https://vimeo.com/{user}/{id}`
 - `https://player.vimeo.com/video/{id}`
 
+## Video and graphics
+
+Text tracks are **speech**. Default video Understanding also needs frames, OCR, and host vision ([_video-body.md](_video-body.md)). The oEmbed description stays in `caption`. If the file and the text track are both missing, say the video was not watched.
+
 ## Prefer (in order)
 
-1. **Host Vimeo connector** if present.
-2. **Public oEmbed**:
+1. **Host Vimeo connector** if it returns text tracks or the media file.
+2. **Official Vimeo API** text tracks when the user has an access token and the video exposes captions (`VIMEO_ACCESS_TOKEN` env). That fills `speech_text` only.
+3. **yt-dlp** when the user asked to read the video, or a file they supplied. Then frames + OCR + host vision + ASR if there is no text track. Stop on password, domain restriction, or login.
+4. **Public oEmbed** for metadata only:
    `GET https://vimeo.com/api/oembed.json?url=<urlencoded>`
-   → title, author, description (description ≠ transcript).
-3. **Official Vimeo API** text tracks / transcripts when the user has an access token and the video exposes captions (`VIMEO_ACCESS_TOKEN` env).
-4. If no captions: user-approved download or user-supplied file → `asr_local.py`.
-5. Never treat the description as spoken content.
+   Title, author, description → `caption`. Never the body.
 
 ## Fetch recipe
 
 1. Extract numeric video id (`normalize_url.py`).
-2. oEmbed for metadata; API or connector for text tracks.
-3. Set `body_kind: transcript` only when real captions/ASR exist.
-4. Summarize from transcript; flag auto-caption uncertainty.
+2. Text tracks or ASR → `speech_text`. Frames → `visual_text` / `visual_description`.
+3. Set `body_kind: media_understanding` only when pictures and speech were both read. Text-track-only is `transcript` with graphics unread.
+4. Summarize from speech + visuals. Flag auto-caption uncertainty. Description stays in `caption`.
 
 ## Honest limits
 
@@ -34,8 +37,9 @@
 ## Codex prompt sketch
 
 ```text
-Follow platforms/vimeo.md. URL: <URL>
-Prefer captions/transcript over description. Else user media+ASR.
+Follow platforms/vimeo.md and platforms/_video-body.md. URL: <URL>
+Speech from text tracks or ASR. Frames for graphics. Description is metadata.
+If acquire fails and there is no text track, say the video was not watched.
 ```
 
 ## References

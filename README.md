@@ -1,10 +1,10 @@
 # social-content-reader
 
-**Public Agent Skill** that teaches AI agents how to **read and understand** social media content from public text: transcripts, article/post bodies, and share captions.
+**Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.3.2** treats a public caption as enough to understand the post. WeChat 视频号 `weixin.qq.com/sph/<id>` is WebFetch caption → Understanding, with no file handoff on that path. The same default applies where Instagram, TikTok, Douyin, Threads, X, and Facebook expose a public caption or post text. Spoken ASR is optional. **0.3.1** added sph link detection and Mac/Linux install docs, which stay in place.
+Version **0.4.0** makes the media file the default success path. Agents extract frames (`extract_frames.py`), OCR burned-in text when Tesseract or macOS Vision is available (`ocr_frames.py`), describe frames with the host vision/video tool, and transcribe speech with `asr_local.py` or an official transcript track. If the file cannot be acquired, the agent says the video was not watched. **0.3.1** still documents WeChat 视频号 `weixin.qq.com/sph/<id>` caption metadata. **0.3.0** expanded coverage across major **overseas** and **Chinese** platforms.
 
-Most social sites block or frustrate agents. This skill gives a reusable recipe: detect the platform → prefer an existing connector → fall back to a documented public path → normalize → summarize what the content is *about*.
+Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
 > **Runtime:** Windows 24/7 is fine for heavy extract/summarize jobs. Mac and Linux are fully supported for Codex skill load, fetch, and ASR. [Codex CLI](https://github.com/openai/codex) plus Cursor / Claude Code skill loaders via the [Agent Skills](https://agentskills.io) format.
 
@@ -32,7 +32,7 @@ Or clone this repo and symlink — see [INSTALL_OWN.md](INSTALL_OWN.md) for Anth
 ~/.cursor/skills/social-content-reader/
 ```
 
-Then ask the agent: *“Read this YouTube / Reddit / Bilibili URL and tell me what it’s arguing.”*
+Then ask the agent: *“Read this video — what is on screen and what do they say? If you cannot get the file, say so.”*
 
 ## Codex layout
 
@@ -45,12 +45,12 @@ C:\Users\<you>\source\repos\social-content-reader
 
 ```bash
 cd ~/Developer/social-content-reader
-codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Return normalized JSON + a short understanding summary."
+codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Acquire the media, read frames, on-screen text, and speech. Return normalized JSON + an understanding from the media. If acquire fails, say the video was not watched."
 ```
 
 ```powershell
 cd C:\Users\<you>\source\repos\social-content-reader
-codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Return normalized JSON + a short understanding summary."
+codex exec --full-auto "Follow skills/social-content-reader for URL <URL>. Acquire the media, read frames, on-screen text, and speech. Return normalized JSON + an understanding from the media. If acquire fails, say the video was not watched."
 ```
 
 Prefer host MCP connectors when present. Treat Codex output as untrusted third-party content. Machine paths and symlinks: [INSTALL_OWN.md](INSTALL_OWN.md).
@@ -59,35 +59,47 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 
 ### Overseas / global
 
-| Platform | Status | What agents can actually understand | Notes |
+| Platform | Status | What counts as reading it | Notes |
 | --- | --- | --- | --- |
-| **YouTube** | ✅ Works | Full transcript (+ metadata) | Prefer host YouTube / TubeAlfred-style transcript tools. Description alone is **not** enough. |
-| **X / Twitter** | ✅ Works | Public post text | Host X connector → `publish.x.com/oembed`, then understand. Threads/media bytes stay limited. |
-| **Instagram** | ✅ Works when a caption exists | Caption or post text | Tokenless oEmbed is often embed chrome with no caption. ASR only for spoken-verbatim or an empty caption. |
-| **TikTok** | ✅ Works | Caption via oEmbed | Understand from the caption. ASR is optional. |
-| **Threads** | ✅ Works when post text exists | Public post text | oEmbed / public page → understand. Login walls stay unavailable. |
-| **Reddit** | ✅ Works | OP selftext (+ optional comments) | Public `.json` append or host connector. |
-| **Facebook** | ✅ Works when public text exists | Page post or Reel caption via Graph/oEmbed | Personal posts usually unavailable. ASR optional for spoken Reels. |
-| **Vimeo** | ✅ Works | Captions/text tracks when present | oEmbed description ≠ transcript. |
+| **YouTube** | Works with transcript + frames | Speech from official captions or ASR; graphics from frames | Description is metadata. `yt-dlp` when the user asked for the file. |
+| **X / Twitter** | Post text works; video needs a file | Public post text. Attached video → media pipeline | Host X connector → `publish.x.com/oembed` for the post only. |
+| **Instagram** | Media required for a Reel | Frames + OCR + vision + ASR on a local file | oEmbed is an embed preview, not the Reel. |
+| **TikTok** | Media required | Local file via `yt-dlp` or in-app Save, then the media pipeline | oEmbed caption is metadata. |
+| **Threads** | Post text when public; video needs a file | Public post text. Video → media pipeline | Login walls → ask for paste or a file. |
+| **Reddit** | Public text works; video needs a file | OP selftext. `v.redd.it` → media pipeline | Public `.json` append or host connector. |
+| **LinkedIn** | Partial; video needs a file | Post/article when authorized or pasted | Often login-walled. Native video is not the blurb. |
+| **Facebook** | Page post when authorized; Reel needs a file | Graph/paste for the post. Reel → media pipeline | Personal posts usually unavailable. |
+| **Telegram** | Public text via `t.me/s/`; video needs a file | Channel text. Video/voice → file + pipeline | Private chats need bot membership or export. |
+| **Vimeo** | Works when text tracks or a file are read | Text tracks = speech. Frames = graphics | oEmbed description is metadata. |
+| **Twitch** | VOD/clip needs CC or a file | CC or ASR for speech; frames for graphics | Helix is metadata. Chat is not the VOD. |
 
 ### Chinese
 
-| Platform | Status | What agents can actually understand | Notes |
+| Platform | Status | What counts as reading it | Notes |
 | --- | --- | --- | --- |
-| **Bilibili** | ✅ Works | Uploader CC / subtitles often | View API + player subtitles; else ASR. |
-| **Douyin 抖音** | ✅ Works when a share caption exists | Share-page caption | WebFetch caption → understand. Empty/verification pages stay blocked. ASR optional. |
-| **WeChat 公众号** | Partial | Article body on short `/s/<id>` links | Verification → user paste. |
-| **WeChat 视频号** | ✅ Works | What the video is about, from the sph share caption | WebFetch `weixin.qq.com/sph/<id>` → caption → Understanding. Example: `AAZ3p39sQm` (Codex token waste; brainstorm in ChatGPT first). ASR optional. `channels.weixin.qq.com` feed paths stay blocked (`errCode 10012`). |
+| **Bilibili** | Works when CC or a file is read | CC/ASR = speech. Frames = graphics | `desc` is metadata. `yt-dlp` for a public file the user asked to read. |
+| **Douyin 抖音** | Media required; acquire is automatic | mp4 from `acquire_douyin.py`, then frames + OCR + vision + ASR | Mobile share `m.douyin.com/share/video/{id}` after a `www.douyin.com` visit. iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
+| **小红书 / RedNote** | Note text via paste; video/images need media | Pasted note body. Video/images → media pipeline | App/login walls common. A title card is not the note. |
+| **WeChat 公众号** | Article body on short `/s/<id>` links | Article HTML. Embedded 视频号 → media file | Verification → user paste. Do not solve captchas. |
+| **WeChat 视频号** | Media required | User export/save, then the media pipeline | sph WebFetch caption is metadata. Feed paths stay blocked (`errCode 10012`). |
 
-See `skills/social-content-reader/platforms/*.md` for per-platform recipes.
+See `skills/social-content-reader/platforms/*.md`. Shared video steps: [`platforms/_video-body.md`](skills/social-content-reader/platforms/_video-body.md).
 
-Platform recipes for LinkedIn / 小红书 / Telegram / Twitch still exist under platforms/ but are not listed as supported.
+## Media pipeline
 
-## ASR pipeline
+Default video success is a **local file**:
 
-User-media ASR is for **spoken-verbatim** requests and for **empty captions**. It is not required before summarizing a caption or post you already fetched.
+```bash
+python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/clip.mp4" --mode fps --fps 1 --max-frames 24
+python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
+python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/clip.mp4" --language auto --backend auto --model base
+```
 
-When it does apply, short-form speech (IG / TikTok / Douyin / 视频号 / …) is readable from a user-supplied media file:
+Then the host agent describes the frames with its video/vision tools. Understanding is written from those three reads. The share caption is a side note. If acquire fails, say the video was not watched.
+
+`ffmpeg` is required for frames. `yt-dlp` is the documented public acquire CLI when the user asked to read a video and that platform allows it. Tesseract is optional; OCR fails honestly when it is missing. macOS can use Vision via `swiftc` (`--engine vision`).
+
+Speech on a file the user already has:
 
 ```bash
 # Mac / Linux — Python 3.11 or 3.12 preferred (faster-whisper av wheels); brew install ffmpeg
@@ -103,16 +115,16 @@ Backends: faster-whisper → openai-whisper → OpenAI Whisper API (`OPENAI_API_
 
 ## Architecture (one line)
 
-**URL detect → prefer connector → fetch path → normalize → understand/summarize.**
+**Detect → acquire a local file (or the written post) → frames + OCR + vision + speech → normalize → understand. Caption is not the video.**
 
 Details: [`skills/social-content-reader/ARCHITECTURE.md`](skills/social-content-reader/ARCHITECTURE.md).
 
 ## Legal / ToS honesty
 
-- Prefer **official APIs**, **oEmbed**, **public transcripts**, and **user-authorized connectors**.
-- Do **not** steal credentials/cookies, bypass logins, defeat captchas, or use unofficial private API scrapers.
-- Optional download tools only with explicit user approval for that URL.
-- When a platform cannot be read honestly, **say so** and ask for a paste / export / authenticated connector.
+- Prefer **official APIs**, **oEmbed metadata**, **public transcripts**, and **user-authorized connectors**.
+- `yt-dlp` may be used when the user asked to read the video. Other ToS-sensitive download tools need explicit approval for that URL.
+- Do not steal credentials or cookies, bypass logins, defeat captchas, decrypt CDN URLs, or call private undocumented APIs.
+- When a video file cannot be acquired, **say the video was not watched**. A share caption stays metadata.
 
 ## Repo layout
 
@@ -127,16 +139,22 @@ social-content-reader/
     SKILL.md
     ARCHITECTURE.md
     platforms/          # youtube, x, instagram, tiktok, threads, reddit,
-                        # facebook, vimeo, bilibili, douyin, wechat-*
+                        # linkedin, facebook, telegram, vimeo, twitch,
+                        # bilibili, douyin, xiaohongshu, wechat-*
+                        # _video-body.md  (shared video + graphics recipe)
     scripts/
       normalize_url.py
+      extract_frames.py
+      ocr_frames.py
+      ocr_vision.swift
+      acquire_douyin.py
       asr_local.py
     references/
 ```
 
 ## Extending
 
-Add `platforms/<name>.md` with: URL patterns, preferred connector, public fetch path, normalize fields, understand steps, hard limits. Register it in `SKILL.md`, `ARCHITECTURE.md`, and `normalize_url.py`.
+Add `platforms/<name>.md` with: URL patterns, how to acquire a media file, public fetch path for written posts, normalize fields, hard limits, and a pointer to `_video-body.md` for video. Register it in `SKILL.md`, `ARCHITECTURE.md`, and `normalize_url.py`.
 
 ## Author
 
