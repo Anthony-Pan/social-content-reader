@@ -1,6 +1,6 @@
 # LinkedIn
 
-**Status:** Partial — public post text sometimes available; most deep content needs user paste or authorized API.
+**Status:** Deferred this release. Partial — public post text sometimes available; most deep content needs user paste or authorized API. The v0.3.2 caption→understand default was not applied here.
 
 ## URL patterns
 

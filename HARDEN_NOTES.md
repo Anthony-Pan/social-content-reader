@@ -65,7 +65,9 @@ Implemented 2026-10-26 in the Windows repository. Changes are uncommitted; no co
 
 Platform/script paths above are relative to `skills/social-content-reader/` unless otherwise qualified. The PowerShell wrapper was optional and is not needed: invoke Python directly. `normalize_url.py` is unchanged. `SMOKE_RESULTS.md` and `STATUS.md` retain their earlier URL-fetch observations; those historical remote limitations do not describe the new user-file ASR capability.
 
-## Current capability matrix
+## Capability matrix (v0.2.0 snapshot)
+
+This table records the v0.2.0 harden. Current recipes are SKILL.md **0.3.2**: a public caption (including 视频号 sph WebFetch) is enough to understand the post. Do not read the rows below as a requirement to ask for a file.
 
 | Platform | v0.2.0 status | Evidence/input needed |
 | --- | --- | --- |

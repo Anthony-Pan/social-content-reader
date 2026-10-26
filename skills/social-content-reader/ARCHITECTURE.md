@@ -11,7 +11,7 @@ URL
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 2. Resolve path │  connector? → public API/oEmbed/transcript? → user-assist?
+│ 2. Resolve path │  connector? → public caption/oEmbed/share text? → transcript?
 └────────┬────────┘
          ▼
 ┌─────────────────┐
@@ -23,7 +23,7 @@ URL
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 5. Understand   │  summarize / Q&A over body_text (not captions alone)
+│ 5. Understand   │  summarize / Q&A over body_text (caption, post, or transcript)
 └─────────────────┘
 ```
 
@@ -81,16 +81,17 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
 
 ## Path priority (every platform)
 
-For user-supplied files, run the [ASR pipeline](SKILL.md#asr-pipeline) directly; a working remote URL is not required. Short-form video speech (IG / TikTok / Douyin / 视频号) can be understood this way even when remote fetching is blocked. A successful ASR record uses `body_kind: transcript`, copies ASR `text` into `body_text`, and records backend/model/language in `media_notes`. Platform-specific ordering takes precedence over the generic list below.
+For user-supplied files, run the [ASR pipeline](SKILL.md#asr-pipeline) directly; a working remote URL is not required. A successful ASR record uses `body_kind: transcript`, copies ASR `text` into `body_text`, and records backend/model/language in `media_notes`. Platform-specific ordering takes precedence over the generic list below.
+
+On Instagram, TikTok, Douyin, Threads, X, Facebook, and WeChat 视频号, a nonempty public caption or post text is a successful understand path. ASR is optional after that.
 
 1. **Host connector / MCP** already attached to the agent (best).
-2. **Official public API or oEmbed** documented by the platform.
-3. **Transcript / caption endpoints** meant for accessibility (YouTube, Bilibili CC, Vimeo text tracks).
-4. **User-assisted**: user opens page, pastes text, or exports media.
-5. **User media + ASR** for speech when remote transcript is unavailable.
-6. **Blocked**: stop. Do not invent scrapers that fight ToS or auth walls.
+2. **Official public API, oEmbed, or share-page text** (WebFetch). A nonempty caption or post text is enough to understand the post.
+3. **Transcript endpoints** when the platform publishes them (YouTube, Bilibili CC, Vimeo text tracks) or the user asked for spoken words.
+4. **User media + ASR** only when the user wants a spoken/verbatim transcript, or the caption is empty/useless.
+5. **Blocked**: stop. Do not invent scrapers that fight ToS or auth walls.
 
-`caption` and `caption_only` both mean caption/description text, not speech. `webfetch` and `public_webfetch` both mean a host page-text fetch (WebFetch or equivalent).
+`caption` and `caption_only` both mean caption/description text. That text is enough for the Understanding section. It is not a spoken transcript. `webfetch` and `public_webfetch` both mean a host page-text fetch (WebFetch or equivalent). Prefer WebFetch over bare curl when the platform doc says curl returns a JS shell.
 
 ## Runtimes
 

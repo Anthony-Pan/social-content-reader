@@ -1,4 +1,11 @@
-"""URL detect checks: no network."""
+"""URL detect checks: no network.
+
+Doc smoke: ``https://weixin.qq.com/sph/AAZ3p39sQm`` is the caption→understand
+example. Live WebFetch on 2026-10-26 returned a Chinese share caption whose
+themes are Codex token waste and brainstorming in ChatGPT first (then hand
+the conversation to Codex), dated 2026年9月2日, plus a thumbnail. This module
+does not fetch the network; it pins that id and those themes.
+"""
 
 import importlib.util
 import unittest
@@ -12,7 +19,31 @@ normalize_url = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(normalize_url)
 
 
+# Expected themes for the measured sph caption (WebFetch, 2026-10-26).
+SPH_CAPTION_UNDERSTAND_EXAMPLE = {
+    "url": "https://weixin.qq.com/sph/AAZ3p39sQm",
+    "canonical_id": "AAZ3p39sQm",
+    "expected_themes": (
+        "Codex token waste",
+        "brainstorm in ChatGPT first",
+    ),
+}
+
+
 class NormalizeUrlTests(unittest.TestCase):
+    def test_sph_aaz3_is_caption_understand_example(self):
+        example = SPH_CAPTION_UNDERSTAND_EXAMPLE
+        got = normalize_url.detect(example["url"])
+        self.assertEqual(got["platform"], "wechat-channels")
+        self.assertEqual(got["canonical_id"], example["canonical_id"])
+        self.assertEqual(got["link_form"], "sph_share")
+        self.assertTrue(
+            any("caption" in item and "understand" in item for item in got["limits"])
+        )
+        themes = " ".join(example["expected_themes"])
+        self.assertIn("Codex token waste", themes)
+        self.assertIn("brainstorm in ChatGPT first", themes)
+
     def test_weixin_sph_share_link(self):
         got = normalize_url.detect("https://weixin.qq.com/sph/AAZ3p39sQm")
         self.assertEqual(got["platform"], "wechat-channels")

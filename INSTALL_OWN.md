@@ -1,6 +1,6 @@
 # Install on Anthony’s own computers / agents
 
-How **Anthony’s bots** should load and invoke `social-content-reader` (v0.3.1+).
+How **Anthony’s bots** should load and invoke `social-content-reader` (v0.3.2+).
 
 Windows 24/7 is fine for heavy extract/summarize jobs. Mac and Linux are fully supported for Codex skill load, fetch, and ASR.
 
@@ -97,14 +97,14 @@ py -3.12 skills\social-content-reader\scripts\asr_local.py --help
 
 ```bash
 cd ~/Developer/social-content-reader
-codex exec --full-auto "Use skill social-content-reader on <URL>. Return ContentRecord JSON + 8-line understanding. Prefer connectors; for speech-only platforms use user media + python3 scripts/asr_local.py."
+codex exec --full-auto "Use skill social-content-reader on <URL>. Return ContentRecord JSON + 8-line understanding. Public caption or post text is enough; use user media + python3 scripts/asr_local.py only for spoken-verbatim or an empty caption."
 ```
 
 **Codex (Windows, heavy lift):**
 
 ```powershell
 cd C:\Users\aw\source\repos\social-content-reader
-codex exec --full-auto "Use skill social-content-reader on <URL>. Return ContentRecord JSON + 8-line understanding. Prefer connectors; for speech-only platforms use user media + asr_local.py via py -3.12."
+codex exec --full-auto "Use skill social-content-reader on <URL>. Return ContentRecord JSON + 8-line understanding. Public caption or post text is enough; use user media + asr_local.py via py -3.12 only for spoken-verbatim or an empty caption."
 ```
 
 **Cursor / Claude / Grok agent:**
@@ -125,6 +125,6 @@ The sph example should print `platform` `wechat-channels` and `canonical_id` `AA
 
 ## Success check
 
-1. Skill folder exists under `~/.agents/skills/social-content-reader/SKILL.md` (version `0.3.1` in frontmatter). On Mac that path is a symlink to `~/Developer/social-content-reader/skills/social-content-reader`.
+1. Skill folder exists under `~/.agents/skills/social-content-reader/SKILL.md` (version `0.3.2` in frontmatter). On Mac that path is a symlink to `~/Developer/social-content-reader/skills/social-content-reader`.
 2. `normalize_url.py` detects YouTube, Reddit, TikTok, Bilibili, and `weixin.qq.com/sph/<id>` (`link_form: sph_share`).
 3. `python3 ... asr_local.py --help` (Mac/Linux) or `py -3.12 ... asr_local.py --help` (Windows) exits 0 after deps install.
