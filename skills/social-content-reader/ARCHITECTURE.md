@@ -15,8 +15,8 @@ URL or local file
 └────────┬────────┘
          ▼
 ┌──────────────────────────────┐
-│ 3a. Video: acquire local file │  yt-dlp where it works, app Save/export,
-│     or honest acquire_failed  │  user file. No login/captcha bypass.
+│ 3a. Video: acquire local file │  platform helper (Douyin playwm), yt-dlp
+│     or honest acquire_failed  │  only where a file was saved, user file.
 └────────┬─────────────────────┘
          ▼
 ┌─────────────────┐
@@ -102,7 +102,7 @@ Platform docs name the acquire tool that actually works. The shared order:
 
 1. **Platform acquire helper** when that platform’s doc makes it the default. Douyin: `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → mp4). Run it without asking the user to export.
 2. **A file the user already attached.** Read it. Do not ask for an export before step 1 has been tried.
-3. **yt-dlp** when the user asked to read the video and the platform doc says that public URL can download. Stop on login, captcha, or DRM.
+3. **yt-dlp** when the user asked to read the video and a run on that platform has saved a file (YouTube, Mac 2026-10-26). Stop on login, captcha, DRM, IP block, or HTTP 412. TikTok and Bilibili file download are not verified.
 4. **Host connector** when it returns a real transcript and/or permitted media. Official CC (YouTube, Bilibili, Vimeo text tracks) fills `speech_text` only.
 5. **Read the file:** `extract_frames.py` → `ocr_frames.py` → host vision/video tool → `asr_local.py` when speech is still missing.
 6. **Acquire failed:** stop. `body_kind: unavailable`. Do not substitute the share caption. User export is a fallback only after the documented player returns no media URL.

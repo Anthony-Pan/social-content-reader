@@ -50,7 +50,7 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
    - **Written post or article** (Reddit selftext, X/Threads text, 公众号 article, LinkedIn article, Telegram text): the written body is the post. An attached video still uses the media pipeline.
 3. **Prefer a host connector** when it returns a real transcript, permitted media, or the article body. Metadata-only connectors are not finished.
 4. **Video pipeline** — follow [platforms/_video-body.md](platforms/_video-body.md) and the platform doc:
-   1. **Acquire** a local video/audio file (or a user-exported keyframe set). Douyin’s default is `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → mp4) with no user export step. `yt-dlp` is an allowed public CLI when the user asked to read the video and that platform’s doc says it works. App Save/export is the fallback when the documented player has no media URL. ToS-sensitive downloaders other than those documented paths need explicit approval for that URL.
+   1. **Acquire** a local video/audio file (or a user-exported keyframe set). Douyin’s default is `scripts/acquire_douyin.py` (mobile share `<video>` → playwm → `douyin_{id}.mp4`) with no user export step. Mac, 2026-10-26: that helper re-downloaded aweme `7696098282904259850` repeatedly. `yt-dlp` is an allowed public CLI when the user asked to read the video and a run has saved a file (YouTube on that Mac). TikTok was IP-blocked and Bilibili returned HTTP 412; do not claim those file recipes. App Save/export is the fallback when the documented player has no media URL. ToS-sensitive downloaders other than those documented paths need explicit approval for that URL.
    2. **Frames:** `scripts/extract_frames.py` (`--mode fps` or `--mode scene`).
    3. **Burned-in text:** `scripts/ocr_frames.py` (Tesseract, or macOS Vision when available). If OCR is absent, say so.
    4. **Vision:** the host agent describes the video file and the frames with its video/vision tools (`visual_description`). This skill does not ship a vision model. Do not invent the picture.
@@ -148,10 +148,10 @@ Video status means **media understanding** (picture and speech), not caption-onl
 
 | Platform | Video / graphic status | Prefer |
 | --- | --- | --- |
-| YouTube | Works when media or transcript+frames are read | Host transcript for speech + frames for graphics; `yt-dlp` when the user asked to read the file. Description is not the body. |
+| YouTube | Works when media or transcript+frames are read | Host transcript for speech + frames for graphics. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file. That file is not Understanding by itself. Description is not the body. |
 | X/Twitter | Post text works; attached video needs a file | Host X connector for the post. Video → media pipeline. |
 | Instagram | Media required for a Reel | User Save/export or `yt-dlp` when the user asked to read it. oEmbed is not the Reel. |
-| TikTok | Media required | `yt-dlp` on many public videos; else in-app Save. oEmbed caption is metadata. |
+| TikTok | Media required | A local file, then the media pipeline. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. Do not treat `yt-dlp` as a verified TikTok file recipe until a sample saves a file. oEmbed caption is metadata. |
 | Threads | Post text when public; video needs a file | oEmbed / public page for the post. Video → media pipeline. |
 | Reddit | Public selftext works; v.redd.it needs a file | `.json` for the post. Video → media pipeline. |
 | LinkedIn | Often login-walled; video needs a file | Authorized API or user paste for the post. Video → media pipeline. |
@@ -164,8 +164,8 @@ Video status means **media understanding** (picture and speech), not caption-onl
 
 | Platform | Video / graphic status | Prefer |
 | --- | --- | --- |
-| Bilibili | Works when CC or a file is read | View API + subtitles for speech; frames/`yt-dlp` for graphics. `desc` is not speech. |
-| Douyin 抖音 | Media required; default acquire is automatic | `acquire_douyin.py`: homepage cookies, then `m.douyin.com/share/video/{id}`, then the `<video>` playwm URL → CDN mp4. iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
+| Bilibili | Speech when uploader CC exists; graphics need a file | View API + subtitles for speech. Graphics need a real file. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. `desc` is not speech. |
+| Douyin 抖音 | Media required; auto-acquire works repeatedly | `acquire_douyin.py`: homepage cookies, then `m.douyin.com/share/video/{id}`, then the `<video>` playwm URL → CDN mp4. Mac, 2026-10-26: aweme `7696098282904259850` re-downloaded from `v.douyin.com/2qulGbSTiRI` (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
 | 小红书 / RedNote | Note text via paste; video/images need media | User paste for the note. Video → media pipeline. Images → OCR/vision. |
 | WeChat 公众号 | Article body on short `/s/<id>` links | WebFetch/curl for the article. Embedded 视频号 → media pipeline. |
 | WeChat 视频号 | Media required | User export/save. sph WebFetch caption is metadata. Feed paths stay `errCode 10012`. |

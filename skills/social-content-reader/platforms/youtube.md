@@ -19,7 +19,7 @@ Official caption tracks are **speech**, not the picture. Default video Understan
 ## Prefer (in order)
 
 1. **Host YouTube connector / transcript MCP** if the agent already has one (e.g. TubeAlfred-style research tools, `@captapi/mcp`, `ytapi` MCP, `mcp-youtube`). Use it for **speech**. Still acquire frames for graphics unless the connector already returned frame descriptions you actually looked at.
-2. **yt-dlp** when the user asked to read the video, then `extract_frames.py`, `ocr_frames.py`, host vision, and `asr_local.py` (ASR only if no official transcript). Stop on age-gate, login, or DRM.
+2. **yt-dlp** when the user asked to read the video, then `extract_frames.py`, `ocr_frames.py`, host vision, and `asr_local.py` (ASR only if no official transcript). Stop on age-gate, login, or DRM. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file on Anthony’s network. That is the file, not Understanding by itself.
 3. **Official YouTube Data API v3** for metadata only (`videos.list`). It does not return transcript text or frames.
 4. If no captions and no media file: `body_kind: unavailable`. Ask for a file or an authorized transcript. Do not invent speech or graphics from the description.
 

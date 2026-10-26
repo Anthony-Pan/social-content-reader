@@ -123,13 +123,26 @@ Measured on **Mac** (not this datacenter curl):
 4. `<video>.src` / `currentSrc` is `https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`.
 5. GET that playwm URL with the same browser context and `Referer` set to the share page. It follows to a CDN response `video/mp4`.
 
-Saved file: about **8MB**, **1280×720**, H.264 + AAC, about **49 seconds**.
+Saved file: about **8MB**, **1280×720**, H.264 + AAC, about **49 seconds**. The same helper re-downloaded this aweme from the short link on Anthony’s Mac.
 
 Next step is the media pipeline (`extract_frames.py`, `ocr_frames.py`, `asr_local.py`, host vision / watch the file). The share caption is not the body.
 
-Helper: `skills/social-content-reader/scripts/acquire_douyin.py`. It does not ask the user to export first. If the mobile share page has no `<video>` src, it returns `acquired: false` and says the caption was not used.
+Helper: `skills/social-content-reader/scripts/acquire_douyin.py`. Positional URL or aweme id plus `--out-dir`. It writes `{out-dir}/douyin_{aweme_id}.mp4` and prints JSON `ok`, `path`, `bytes`, `content_type`, `aweme_id`, `play_url`. It does not ask the user to export first. If the mobile share page has no `<video>` src, `ok` is false. `body_snip` is a page excerpt, not Understanding. A download under 20KB is `download too small`.
 
-- **Result:** automatic playwm acquire worked for this aweme on Mac, 2026-10-26. iesdouyin curl remains a non-player.
+- **Result:** automatic playwm acquire worked repeatedly for this aweme on Mac, 2026-10-26. iesdouyin curl remains a non-player.
+
+### 10. Addendum (2026-10-26, v0.4.0) — Mac file-acquire matrix
+
+Measured on Anthony’s Mac, same day. Document only what saved a file.
+
+| Platform | What happened | Claim |
+| --- | --- | --- |
+| Douyin `https://v.douyin.com/2qulGbSTiRI/` → `7696098282904259850` | `acquire_douyin.py` saved ~8MB mp4, more than once | Auto-acquire works. Understanding still needs frames, OCR, vision, and speech. |
+| YouTube | `yt-dlp` saved a file | File acquire works. The file is not Understanding by itself. No specific video id was recorded in this note. |
+| TikTok | `yt-dlp` for the sample tried was IP-blocked from that network | Not a verified file recipe. Do not document `yt-dlp` as the TikTok path until a sample saves a file. |
+| Bilibili | `yt-dlp` returned HTTP 412. Public playurl did not save a file | Not a verified file recipe. Uploader CC remains a speech path when the subtitle API returns cues. Graphics still need a file. |
+
+- **Result:** Douyin and YouTube file acquire are the verified rows. TikTok and Bilibili stay open. Caption and `desc` are still not the video.
 
 ## Honesty notes
 

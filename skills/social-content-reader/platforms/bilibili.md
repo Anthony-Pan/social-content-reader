@@ -1,6 +1,6 @@
 # Bilibili 哔哩哔哩
 
-**Status:** Works often for speech when uploader CC exists. Graphics still need frames. The description is not the video.
+**Status:** Speech often works when uploader CC exists. A file download is **not** verified. Mac, 2026-10-26: `yt-dlp` returned **HTTP 412**. Public playurl still needs a recipe that has actually saved a file. Graphics need that file. The description is not the video.
 
 ## URL patterns
 
@@ -11,7 +11,7 @@
 
 ## Video and graphics
 
-Uploader CC / subtitles are **speech** (`speech_text`). Default video Understanding also runs frames, OCR, and host vision on a local file ([_video-body.md](_video-body.md)). `yt-dlp` is allowed when the user asked to read a public video. `desc` stays in `caption`. Danmaku is not speech unless the user asks for comment analysis. If there is no CC and no file, say the video was not watched.
+Uploader CC / subtitles are **speech** (`speech_text`). Default video Understanding also runs frames, OCR, and host vision on a local file ([_video-body.md](_video-body.md)). Do not claim `yt-dlp` or a public playurl gets that file: on Anthony’s Mac, 2026-10-26, `yt-dlp` returned HTTP 412. `desc` stays in `caption`. Danmaku is not speech unless the user asks for comment analysis. If there is no CC and no file, say the video was not watched.
 
 ## Prefer (in order)
 
@@ -21,7 +21,7 @@ Uploader CC / subtitles are **speech** (`speech_text`). Default video Understand
    - `https://api.bilibili.com/x/web-interface/view?bvid=BV…` for title/owner/desc
    - Obtain subtitle list from the player/subtitle API associated with the `cid` when the uploader provided CC
    - Use browser-like Referer `https://www.bilibili.com` when required by the API
-3. If no subtitles: local file (`yt-dlp` when the user asked to read the public video, or a user export) → `asr_local.py` (`--language zh` or `auto`) plus frames.
+3. If no subtitles: a local file the user already has → `asr_local.py` (`--language zh` or `auto`) plus frames. `yt-dlp` / public playurl is not a verified acquire until a run saves a video file. HTTP 412 means stop and say the file was not acquired.
 4. Description (`desc`) alone is not speech and not the picture. Store it in `caption` and set `body_kind: unavailable` until media or CC is read.
 
 ## Fetch recipe

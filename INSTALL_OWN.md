@@ -77,11 +77,11 @@ Mac is the approved machine for a live run of this helper. Understanding is stil
 python3 -m pip install -r ~/Developer/social-content-reader/skills/social-content-reader/scripts/requirements-acquire.txt
 python3 -m playwright install chromium
 python3 ~/Developer/social-content-reader/skills/social-content-reader/scripts/acquire_douyin.py \
-  --url "https://v.douyin.com/2qulGbSTiRI/" \
+  "https://v.douyin.com/2qulGbSTiRI/" \
   --out-dir "$HOME/Media"
 ```
 
-`--aweme-id 7696098282904259850` can replace `--url`. Stdout is one JSON object: `ok`, `path` (`$HOME/Media/video.mp4`), `bytes`, `content_type`, `aweme_id`, `play_url`. Playwright uses a mobile Chromium UA, opens `https://www.douyin.com/` for cookies, then `https://m.douyin.com/share/video/{id}`, reads `<video>.currentSrc` (the playwm URL), and GETs it with redirects in that same browser. Then run `extract_frames.py`, `ocr_frames.py`, and `asr_local.py` on `path`.
+A bare aweme id works in the same position: `7696098282904259850`. Stdout is one JSON object: `ok`, `path` (`$HOME/Media/douyin_7696098282904259850.mp4`), `bytes`, `content_type`, `aweme_id`, `play_url`. Playwright uses a mobile Chromium UA, opens `https://www.douyin.com/` for cookies, then `https://m.douyin.com/share/video/{id}`, reads `<video>.currentSrc` (the playwm URL), and GETs it with redirects in that same browser. Then run `extract_frames.py`, `ocr_frames.py`, and `asr_local.py` on `path`. Re-downloaded on Anthony’s Mac, 2026-10-26; the same helper acquired this aweme repeatedly there. A download under 20KB is a failure. `body_snip` on failure is a page excerpt, not Understanding.
 
 Windows uses the same two install commands with `py -3.12 -m` instead of `python3 -m`.
 

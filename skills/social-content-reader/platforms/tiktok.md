@@ -1,6 +1,6 @@
 # TikTok (global)
 
-**Status:** Media required for video Understanding. oEmbed caption is metadata only.
+**Status:** Media required for video Understanding. oEmbed caption is metadata only. Mac, 2026-10-26: `yt-dlp` for the sample tried from Anthony’s network was **IP-blocked**. That is not a verified TikTok file recipe.
 
 **Goal:** Read what the clip shows and what is spoken. Follow [the shared video recipe](_video-body.md).
 
@@ -18,9 +18,8 @@ Default success is a local file run through frames, OCR, host vision, and ASR ([
 ## Prefer (in order)
 
 1. A file the user already saved from TikTok.
-2. **yt-dlp** when the user asked to read the video and the public URL downloads without a login bypass:
+2. **yt-dlp** only after a download of **this** URL actually returns a video file. Do not assume it works. The 2026-10-26 Mac sample was IP-blocked from that network. Stop on login, captcha, region block, or IP block and say the file was not acquired.
    `yt-dlp --no-playlist -o "%(id)s.%(ext)s" "<tiktok url>"`
-   Stop on login, captcha, or region block.
 3. Host TikTok connector when it returns the media file or a real transcript (not a caption alone).
 4. Frames + OCR + host vision + ASR on the local file:
 

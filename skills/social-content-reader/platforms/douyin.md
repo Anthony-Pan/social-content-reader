@@ -26,20 +26,19 @@ Put any share-page caption in `caption` only when a separate metadata fetch retu
    4. Read `<video>.currentSrc` / `<video>.src`. It is a play URL of the form `https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`.
    5. GET that playwm URL with the **same browser context** (those cookies) and `Referer` set to the mobile share page. The response follows to a CDN `video/mp4`.
 
-   That run saved about 8MB, 1280×720, H.264 + AAC, ~49 seconds. Then run the media pipeline on that file. Do not write Understanding from the caption.
+   Re-downloaded on Anthony’s Mac, 2026-10-26, from that short link: about 8MB. The same helper has acquired this aweme repeatedly on that Mac. Then run the media pipeline on `path`. Do not write Understanding from the caption.
 
    ```bash
    python3 skills/social-content-reader/scripts/acquire_douyin.py \
-     --url "https://v.douyin.com/2qulGbSTiRI/" \
-     --out-dir "$HOME/Media"
+     "https://v.douyin.com/2qulGbSTiRI/" --out-dir "$HOME/Media"
    python3 skills/social-content-reader/scripts/extract_frames.py \
-     --media "$HOME/Media/video.mp4" --mode fps --fps 1 --max-frames 24
+     --media "$HOME/Media/douyin_7696098282904259850.mp4" --mode fps --fps 1 --max-frames 24
    python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
    python3 skills/social-content-reader/scripts/asr_local.py \
-     --media "$HOME/Media/video.mp4" --language zh --backend auto --model base
+     --media "$HOME/Media/douyin_7696098282904259850.mp4" --language zh --backend auto --model base
    ```
 
-   The helper writes `{out-dir}/video.mp4` and prints one JSON object with `ok`, `path`, `bytes`, `content_type`, `aweme_id`, and `play_url`. Require `ok: true` and a real `path`. `caption_used_as_body` is always false. The host agent then watches the file and the frames. Windows: `py -3.12` and `C:\Media`. Mac is the approved machine for a live run of this helper.
+   A bare aweme id works in the same position: `7696098282904259850`. The helper writes `{out-dir}/douyin_{aweme_id}.mp4` and prints JSON with `ok`, `path`, `bytes`, `content_type`, `aweme_id`, and `play_url`. Require `ok: true` and a real `path`. On failure, `body_snip` is a page excerpt for diagnosis, not Understanding. The host agent then watches the file and the frames.
 
    Install once: `python3 -m pip install playwright && python3 -m playwright install chromium` (Windows: `py -3.12`). See [requirements-acquire.txt](../scripts/requirements-acquire.txt).
 
@@ -59,7 +58,7 @@ Share `https://v.douyin.com/2qulGbSTiRI` resolves to aweme **7696098282904259850
 
 1. Resolve a short link to the numeric aweme id (`acquire_douyin.py` does this from public redirects).
 2. Run the helper. Do not stop on the iesdouyin wall before trying the mobile share page.
-3. On `acquired: true`, set `fetch_method: playwright_playwm`, then frames + OCR + host vision + ASR. `body_kind: media_understanding` only after pictures and speech were both read.
+3. On `ok: true`, set `fetch_method: playwright_playwm`, then frames + OCR + host vision + ASR on `path`. `body_kind: media_understanding` only after pictures and speech were both read.
 4. On failure, `body_kind: unavailable`, `fetch_method: acquire_failed` or `blocked`. Leave `speech_text` and `visual_description` empty. Do not write Understanding from the caption.
 
 ## Honest limits
@@ -67,7 +66,7 @@ Share `https://v.douyin.com/2qulGbSTiRI` resolves to aweme **7696098282904259850
 - Cookies stay inside the Playwright context that just visited `www.douyin.com`. The helper does not write a cookie file and does not read the user's browser profile.
 - No captcha defeat, login bypass, cookie theft, CDN decrypt, or private API reverse-engineering. playwm is the URL the page's own `<video>` element is playing.
 - TikTok oEmbed does not read Douyin videos.
-- The helper caps a download at 200MB and refuses a response that is HTML/JSON rather than a video file.
+- A download under 20KB is a failure (`download too small`). Do not treat that body as the video.
 
 ## Codex prompt sketch
 

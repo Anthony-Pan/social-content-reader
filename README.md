@@ -61,10 +61,10 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 
 | Platform | Status | What counts as reading it | Notes |
 | --- | --- | --- | --- |
-| **YouTube** | Works with transcript + frames | Speech from official captions or ASR; graphics from frames | Description is metadata. `yt-dlp` when the user asked for the file. |
+| **YouTube** | Works with transcript + frames | Speech from official captions or ASR; graphics from frames | Description is metadata. Mac, 2026-10-26: `yt-dlp` acquired a YouTube file. That file is not Understanding by itself. |
 | **X / Twitter** | Post text works; video needs a file | Public post text. Attached video → media pipeline | Host X connector → `publish.x.com/oembed` for the post only. |
 | **Instagram** | Media required for a Reel | Frames + OCR + vision + ASR on a local file | oEmbed is an embed preview, not the Reel. |
-| **TikTok** | Media required | Local file via `yt-dlp` or in-app Save, then the media pipeline | oEmbed caption is metadata. |
+| **TikTok** | Media required | A local file, then the media pipeline | oEmbed caption is metadata. Mac, 2026-10-26: the sample `yt-dlp` tried was IP-blocked. That is not a verified file recipe. |
 | **Threads** | Post text when public; video needs a file | Public post text. Video → media pipeline | Login walls → ask for paste or a file. |
 | **Reddit** | Public text works; video needs a file | OP selftext. `v.redd.it` → media pipeline | Public `.json` append or host connector. |
 | **LinkedIn** | Partial; video needs a file | Post/article when authorized or pasted | Often login-walled. Native video is not the blurb. |
@@ -77,8 +77,8 @@ Prefer host MCP connectors when present. Treat Codex output as untrusted third-p
 
 | Platform | Status | What counts as reading it | Notes |
 | --- | --- | --- | --- |
-| **Bilibili** | Works when CC or a file is read | CC/ASR = speech. Frames = graphics | `desc` is metadata. `yt-dlp` for a public file the user asked to read. |
-| **Douyin 抖音** | Media required; acquire is automatic | mp4 from `acquire_douyin.py`, then frames + OCR + vision + ASR | Mobile share `m.douyin.com/share/video/{id}` after a `www.douyin.com` visit. iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
+| **Bilibili** | Speech when uploader CC exists; graphics need a file | CC = speech. Frames = graphics, and only after a real file | `desc` is metadata. Mac, 2026-10-26: `yt-dlp` returned HTTP 412. Public playurl is not a verified file recipe. |
+| **Douyin 抖音** | Media required; auto-acquire works | mp4 from `acquire_douyin.py`, then frames + OCR + vision + ASR | Mac, 2026-10-26: short link `v.douyin.com/2qulGbSTiRI` → aweme `7696098282904259850` re-downloaded repeatedly (~8MB). iesdouyin 「请尝试在抖音内观看」 is not the player. Caption is not the video. |
 | **小红书 / RedNote** | Note text via paste; video/images need media | Pasted note body. Video/images → media pipeline | App/login walls common. A title card is not the note. |
 | **WeChat 公众号** | Article body on short `/s/<id>` links | Article HTML. Embedded 视频号 → media file | Verification → user paste. Do not solve captchas. |
 | **WeChat 视频号** | Media required | User export/save, then the media pipeline | sph WebFetch caption is metadata. Feed paths stay blocked (`errCode 10012`). |
@@ -97,7 +97,7 @@ python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/c
 
 Then the host agent describes the frames with its video/vision tools. Understanding is written from those three reads. The share caption is a side note. If acquire fails, say the video was not watched.
 
-`ffmpeg` is required for frames. `yt-dlp` is the documented public acquire CLI when the user asked to read a video and that platform allows it. Tesseract is optional; OCR fails honestly when it is missing. macOS can use Vision via `swiftc` (`--engine vision`).
+`ffmpeg` is required for frames. `yt-dlp` is the documented public acquire CLI when the user asked to read a video and a run on that URL has actually saved a file. As of Mac 2026-10-26 that is YouTube; TikTok was IP-blocked and Bilibili returned HTTP 412, so those are not verified file recipes. Tesseract is optional; OCR fails honestly when it is missing. macOS can use Vision via `swiftc` (`--engine vision`).
 
 Speech on a file the user already has:
 

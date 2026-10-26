@@ -11,7 +11,7 @@ Video Understanding now requires a local media file (or an official speech track
 - `platforms/_video-body.md` — shared acquire + read recipe. Platform docs point here. Captions stay metadata.
 - Skill version **0.4.0**. `normalize_url.py` and `asr_local.py` kept.
 
-`yt-dlp` is documented as a public acquire CLI when the user asked to read the video. No cookie theft, login bypass, captcha defeat, CDN decrypt, or private API client was added.
+`yt-dlp` is documented as a public acquire CLI when the user asked to read the video **and** a run has saved a file. Mac, 2026-10-26: YouTube saved a file; the TikTok sample was IP-blocked; Bilibili returned HTTP 412. Those last two are not file recipes. No cookie theft, login bypass, captcha defeat, CDN decrypt, or private API client was added.
 
 ## Douyin acquire (2026-10-26)
 
@@ -20,9 +20,18 @@ Share `https://v.douyin.com/2qulGbSTiRI/` → aweme **7696098282904259850**.
 Two different pages:
 
 - **iesdouyin / desktop curl.** Redirects `v.douyin.com` → `www.iesdouyin.com/share/video/7696098282904259850/` → `www.douyin.com/video/7696098282904259850`. Datacenter curl returns a JavaScript shell. That share surface often says **「请尝试在抖音内观看」**. It is not the player.
-- **Working path (Mac).** `scripts/acquire_douyin.py`. Playwright Chromium, mobile UA. Open `https://www.douyin.com/` for cookies in that browser, then `https://m.douyin.com/share/video/7696098282904259850`. Read `<video>.src` / `currentSrc` (`https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`). GET it with the same context and `Referer` = the share page. Follows to a CDN `video/mp4` (~8MB, 1280×720, H.264+AAC, ~49s). Then `extract_frames.py`, `asr_local.py`, and the host video tool.
+- **Working path (Mac, repeated).** `scripts/acquire_douyin.py` is the helper that re-downloaded this aweme from `https://v.douyin.com/2qulGbSTiRI/`. CLI is positional (`URL` or bare id) plus `--out-dir`. It writes `douyin_{aweme_id}.mp4`. Playwright Chromium, mobile UA. Open `https://www.douyin.com/` for cookies in that browser, then `https://m.douyin.com/share/video/7696098282904259850`. Read `<video>.src` / `currentSrc` (`https://m.douyin.com/aweme/v1/playwm/?…&video_id=v0…`). GET it with the same context and `Referer` = the share page. Follows to a CDN `video/mp4` (~8MB, 1280×720, H.264+AAC, ~49s). Then `extract_frames.py`, `asr_local.py`, and the host video tool. Success JSON uses `ok: true`.
 
-Default goal is that automatic file. User export is the fallback only when the mobile share page has no `<video>` src. The helper does not write cookies to disk, solve captchas, or return a caption as the body. A share caption is not a substitute.
+Default goal is that automatic file. User export is the fallback only when the mobile share page has no `<video>` src. The helper does not write cookies to disk, solve captchas, or return a caption as the body. A share caption is not a substitute. `body_snip` on failure is a page excerpt, not Understanding.
+
+## Mac file matrix (2026-10-26)
+
+| Platform | Observed | Documented as a file recipe |
+| --- | --- | --- |
+| Douyin | `acquire_douyin.py` saved ~8MB, repeatedly | Yes |
+| YouTube | `yt-dlp` saved a file | Yes, for the file only. Frames and speech still required. |
+| TikTok | Sample `yt-dlp` IP-blocked | No |
+| Bilibili | `yt-dlp` HTTP 412; public playurl did not save a file | No. Uploader CC can still be speech. |
 
 ## Tests
 
