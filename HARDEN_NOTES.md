@@ -19,6 +19,14 @@ Invoke ASR with:
 py -3.12 skills\social-content-reader\scripts\asr_local.py --media <file> --language auto --backend faster-whisper --model base
 ```
 
+
+### ASR dry-run (Alien, 2026-10-26)
+
+- Sine-tone WAV: empty transcript (expected) after fixing av pin.
+- Windows SAPI speech WAV → `asr_local.py --backend faster-whisper --model tiny` →
+  `ok: true`, text approximately: "Hello from social content reader version 0.3".
+- **Pin:** `av>=11,<14` (av 19.0.2 caused `TypeError: open() got unexpected keyword argument 'metadata_errors'` with faster-whisper 1.2.1). See `scripts/requirements-asr.txt`.
+
 ## v0.3 platform expansion
 
 Added honest recipes (connector → public API/oEmbed/CC → user paste → user-media ASR):

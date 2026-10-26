@@ -45,3 +45,7 @@ Return ContentRecord + short understanding. Flag truncation.
 
 - X oEmbed / publish embed endpoint usage (public posts)
 - Official X API Post lookup when user has developer credentials
+
+## Success criteria
+
+- Nonempty post text via connector or oEmbed, with truncation flagged, **or** ask user to paste.

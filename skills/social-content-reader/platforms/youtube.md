@@ -46,3 +46,8 @@ If no transcript, stop and list options (user paste / STT) — do not guess spok
 
 - YouTube Data API overview (metadata): https://developers.google.com/youtube/v3
 - Agent Skills pattern: prefer connector over scrape
+
+## Success criteria
+
+- `body_kind: transcript` with nonempty caption/ASR text, **or** honest `unavailable` if no captions and no user media.
+- Never claim understanding from description alone.

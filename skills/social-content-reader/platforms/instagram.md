@@ -46,3 +46,7 @@ These are suggested integration names, **not variables consumed by `asr_local.py
 No login bypass, captcha defeat, cookie theft/dumping, session hijack, DRM bypass, or unofficial private API scrapers. URL-only private/inactive/restricted posts and Stories have no supported general fetch path here. An authorized user file or paste can still be understood regardless of its original share-link format. ASR covers speech, not silent visual actions or on-screen text; request screenshots/text when needed. Never claim ASR/OCR that was not run.
 
 If all you have is a link/caption, mark speech unavailable and request a transcript or file. If a file exists, try ASR and report dependency/error details instead of declaring Instagram speech inherently unreadable.
+
+## Success criteria
+
+- Speech: ASR `ok: true` from user media, **or** user-pasted transcript. oEmbed alone → `caption_only` / meta, not full understanding.

@@ -46,7 +46,7 @@ Operational failures return the same keys, `ok: false`, an `error`, and exit cod
 **Important (Anthony-Alien):** the MinGW `python` on PATH cannot install binary `av` wheels. Use official CPython:
 
 ```powershell
-py -3.12 -m pip install faster-whisper
+py -3.12 -m pip install faster-whisper "av>=11,<14"
 py -3.12 skills/social-content-reader/scripts/asr_local.py --help
 ```
 
@@ -57,7 +57,8 @@ Use your chosen Python environment. Install **one** local engine; these commands
 
 ```powershell
 # Preferred local engine (PyAV bundles FFmpeg decoding libraries)
-python -m pip install faster-whisper
+python -m pip install faster-whisper "av>=11,<14"
+# or: py -3.12 -m pip install -r skills/social-content-reader/scripts/requirements-asr.txt
 
 # Alternative local engine (can pull large PyTorch dependencies)
 python -m pip install openai-whisper

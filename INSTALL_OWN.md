@@ -54,7 +54,8 @@ Grok Bot parent agents should `Skill` load `social-content-reader` by name once 
 MinGW `python` on PATH often **cannot** install `av` wheels. Use official CPython:
 
 ```powershell
-py -3.12 -m pip install faster-whisper
+py -3.12 -m pip install faster-whisper "av>=11,<14"
+# or: py -3.12 -m pip install -r skills/social-content-reader/scripts/requirements-asr.txt
 # ffmpeg.exe on User PATH (e.g. C:\Tools\ffmpeg\...\bin) — see HARDEN_NOTES.md
 py -3.12 skills\social-content-reader\scripts\asr_local.py --help
 ```

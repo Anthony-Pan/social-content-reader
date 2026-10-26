@@ -19,6 +19,8 @@ See README / SKILL — 16 platforms. Overseas majors are first-class alongside C
 
 - `py -3.12` + faster-whisper 1.2.1 + ffmpeg 9.0.2 essentials — installed
 - Prefer `py -3.12` over MinGW python for ASR
+- Pin `av>=11,<14` with faster-whisper 1.2.x
+- Dry-run: SAPI speech WAV → ok:true (tiny model)
 
 ## Next
 

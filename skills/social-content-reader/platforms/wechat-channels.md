@@ -41,3 +41,7 @@ Names only: never commit or echo secrets. These are integration conventions, not
 ## Hard limits
 
 No login bypass, captcha defeat, cookie dumping/theft, private API scrapers, or reverse-engineering encrypted streams. Do not treat remote fetch failure as proof that a user-provided video cannot be understood. Local ASR is preferred; API ASR uploads require user authorization as described in the ASR pipeline.
+
+## Success criteria
+
+- User media ASR `ok: true` or pasted transcript; remote URL-only → `blocked` + ask for file/text.
