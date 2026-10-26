@@ -33,7 +33,7 @@ python3 -m pip install playwright && python3 -m playwright install chromium
 python3 skills/social-content-reader/scripts/acquire_douyin.py --url "https://v.douyin.com/2qulGbSTiRI/" --out-dir "$HOME/Media"
 ```
 
-The helper visits `https://www.douyin.com/` in Chromium (mobile UA), then `https://m.douyin.com/share/video/{aweme_id}`, reads the `<video>` playwm URL, and downloads it with that browser's cookies and the share page as Referer. Success is `acquired: true` plus `{aweme_id}.mp4`. iesdouyin pages that say 「请尝试在抖音内观看」 are not this player. If the mobile page has no video src, the JSON error says so and `caption_used_as_body` stays false.
+The helper visits `https://www.douyin.com/` in Chromium (mobile UA), then `https://m.douyin.com/share/video/{aweme_id}`, reads `<video>.currentSrc` (playwm), and GETs it with that browser's cookies, the share page as Referer, and redirects followed. It writes `{out-dir}/video.mp4`. Success JSON is `ok`, `path`, `bytes`, `content_type`, `aweme_id`, `play_url`. iesdouyin pages that say 「请尝试在抖音内观看」 are not this player. If the mobile page has no video src, `ok` is false and `caption_used_as_body` stays false. Mac is the approved machine for a live run. See [INSTALL_OWN.md](../../../INSTALL_OWN.md).
 
 Windows: `py -3.12 -m pip install playwright` then `py -3.12 -m playwright install chromium`.
 

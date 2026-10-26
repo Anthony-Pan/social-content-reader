@@ -33,13 +33,13 @@ Put any share-page caption in `caption` only when a separate metadata fetch retu
      --url "https://v.douyin.com/2qulGbSTiRI/" \
      --out-dir "$HOME/Media"
    python3 skills/social-content-reader/scripts/extract_frames.py \
-     --media "$HOME/Media/7696098282904259850.mp4" --mode fps --fps 1 --max-frames 24
+     --media "$HOME/Media/video.mp4" --mode fps --fps 1 --max-frames 24
    python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
    python3 skills/social-content-reader/scripts/asr_local.py \
-     --media "$HOME/Media/7696098282904259850.mp4" --language zh --backend auto --model base
+     --media "$HOME/Media/video.mp4" --language zh --backend auto --model base
    ```
 
-   Windows: `py -3.12` and `C:\Media`. Require `acquired: true` and a real `media_path`. `caption_used_as_body` is always false. The host agent then watches the file / frames with its video tool.
+   The helper writes `{out-dir}/video.mp4` and prints one JSON object with `ok`, `path`, `bytes`, `content_type`, `aweme_id`, and `play_url`. Require `ok: true` and a real `path`. `caption_used_as_body` is always false. The host agent then watches the file and the frames. Windows: `py -3.12` and `C:\Media`. Mac is the approved machine for a live run of this helper.
 
    Install once: `python3 -m pip install playwright && python3 -m playwright install chromium` (Windows: `py -3.12`). See [requirements-acquire.txt](../scripts/requirements-acquire.txt).
 

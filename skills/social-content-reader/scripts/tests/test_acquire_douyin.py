@@ -39,6 +39,14 @@ class ParseTests(unittest.TestCase):
         found = acquire.resolve_aweme_id("https://v.douyin.com/2qulGbSTiRI/", fetch=fetch)
         self.assertEqual(found, "7696098282904259850")
 
+    def test_out_dir_file_is_video_mp4(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp:
+            dest = acquire.media_dest(temp)
+            self.assertEqual(dest.name, "video.mp4")
+            self.assertEqual(dest.parent, Path(temp).resolve())
+            self.assertTrue(dest.parent.is_dir())
+
     def test_share_page_is_mobile_not_iesdouyin(self):
         self.assertEqual(
             acquire.share_page_url("7696098282904259850"),
@@ -94,16 +102,21 @@ class ParseTests(unittest.TestCase):
         record = acquire.success_record(
             "7696098282904259850",
             "https://m.douyin.com/share/video/7696098282904259850",
-            Path("/tmp/7696098282904259850.mp4"),
+            Path("/tmp/video.mp4"),
             8_000_000,
             "video/mp4",
             PLAYWM,
         )
+        self.assertTrue(record["ok"])
+        self.assertEqual(record["path"], "/tmp/video.mp4")
+        self.assertEqual(record["bytes"], 8_000_000)
+        self.assertEqual(record["content_type"], "video/mp4")
+        self.assertEqual(record["aweme_id"], "7696098282904259850")
+        self.assertEqual(record["play_url"], PLAYWM)
         self.assertTrue(record["acquired"])
         self.assertEqual(record["fetch_method"], "playwright_playwm")
         self.assertFalse(record["caption_used_as_body"])
         self.assertNotIn("caption", record)
-        self.assertNotIn("secret", json.dumps(record))
 
     def test_missing_playwright_is_honest(self):
         def boom():
@@ -127,7 +140,10 @@ class ParseTests(unittest.TestCase):
         self.assertFalse(record["caption_used_as_body"])
         self.assertIn("playwright", record["error"])
         self.assertIn("caption", record["error"].lower())
-        self.assertIsNone(record["media_path"])
+        self.assertIsNone(record["path"])
+        self.assertIsNone(record["play_url"])
+        for key in ("ok", "path", "bytes", "content_type", "aweme_id", "play_url"):
+            self.assertIn(key, record)
 
 
 class BrowserFlowTests(unittest.TestCase):
@@ -192,7 +208,10 @@ class BrowserFlowTests(unittest.TestCase):
         self.assertTrue(record["ok"])
         self.assertTrue(record["acquired"])
         self.assertFalse(record["caption_used_as_body"])
-        self.assertEqual(record["media_path"], str(dest))
+        self.assertEqual(record["path"], str(dest))
+        self.assertEqual(record["play_url"], PLAYWM)
+        self.assertEqual(record["bytes"], len(body))
+        self.assertEqual(record["content_type"], "video/mp4")
 
     def test_wall_without_video_src_does_not_download(self):
         page = Mock()

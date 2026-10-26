@@ -331,19 +331,28 @@ def acquire_with_browser(aweme_id: str, dest: Path, playwright_module) -> dict:
     return success_record(aweme_id, share, dest, saved["bytes"], saved["content_type"], play_url)
 
 
+def media_dest(out_dir: str) -> Path:
+    """Local mp4 path. One acquire writes video.mp4 inside --out-dir."""
+    dest_dir = Path(out_dir).expanduser().resolve()
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    return dest_dir / "video.mp4"
+
+
 def success_record(aweme_id: str, share: str, dest: Path, nbytes: int,
                    content_type: str, play_url: str) -> dict:
+    path = str(dest)
     return {
         "ok": True,
-        "acquired": True,
-        "platform": "douyin",
-        "aweme_id": aweme_id,
-        "share_url": share,
-        "media_path": str(dest),
+        "path": path,
         "bytes": nbytes,
         "content_type": content_type,
+        "aweme_id": aweme_id,
+        "play_url": play_url,
+        "acquired": True,
+        "platform": "douyin",
+        "share_url": share,
+        "media_path": path,
         "fetch_method": "playwright_playwm",
-        "play_url": redact_play_url(play_url),
         "caption_used_as_body": False,
         "error": None,
     }
@@ -352,15 +361,16 @@ def success_record(aweme_id: str, share: str, dest: Path, nbytes: int,
 def empty_record(url: str) -> dict:
     return {
         "ok": False,
-        "acquired": False,
-        "platform": "douyin",
-        "aweme_id": None,
-        "share_url": None,
-        "media_path": None,
+        "path": None,
         "bytes": 0,
         "content_type": None,
-        "fetch_method": "playwright_playwm",
+        "aweme_id": None,
         "play_url": None,
+        "acquired": False,
+        "platform": "douyin",
+        "share_url": None,
+        "media_path": None,
+        "fetch_method": "playwright_playwm",
         "caption_used_as_body": False,
         "source_url": url,
         "error": None,
@@ -370,9 +380,7 @@ def empty_record(url: str) -> dict:
 def acquire(url: str | None, aweme_id: str | None, out_dir: str, fetch=None,
             playwright_module=None) -> dict:
     aweme = aweme_id or resolve_aweme_id(url or "", fetch=fetch)
-    dest_dir = Path(out_dir).expanduser().resolve()
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    dest = dest_dir / f"{aweme}.mp4"
+    dest = media_dest(out_dir)
     module = playwright_module if playwright_module is not None else load_playwright()
     record = acquire_with_browser(aweme, dest, module)
     record["source_url"] = url
@@ -387,7 +395,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--url", default=None, help="Douyin share or video URL")
     parser.add_argument("--aweme-id", default=None, help="Numeric aweme id, if already known")
-    parser.add_argument("--out-dir", default=".", help="Directory for {aweme_id}.mp4")
+    parser.add_argument("--out-dir", default=".",
+                        help="Directory for video.mp4 (default: current directory)")
     args = parser.parse_args(argv)
     record = empty_record(args.url or "")
     try:
