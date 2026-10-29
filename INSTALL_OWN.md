@@ -161,14 +161,14 @@ py -3.12 skills\social-content-reader\scripts\asr_local.py --help
 
 ```bash
 cd ~/Developer/social-content-reader
-codex exec --full-auto "Use skill social-content-reader on <URL>. Acquire the video, run extract_frames.py, ocr_frames.py, and asr_local.py, and describe the frames. Return ContentRecord JSON + an understanding from the media. If acquire fails, say the video was not watched."
+codex exec --full-auto "Use skill social-content-reader on <URL>. Acquire the video, then run understand_media.py on the saved file. Describe the extracted frames and pass that text as --visual-description-file. Return the helper JSON. If acquire fails, say the video was not watched. If ocr_engine or asr_engine is none, do not invent that channel."
 ```
 
 **Codex (Windows, heavy lift):**
 
 ```powershell
 cd C:\Users\aw\source\repos\social-content-reader
-codex exec --full-auto "Use skill social-content-reader on <URL>. Acquire the video, run extract_frames.py, ocr_frames.py, and asr_local.py via py -3.12, and describe the frames. Return ContentRecord JSON + an understanding from the media. If acquire fails, say the video was not watched."
+codex exec --full-auto "Use skill social-content-reader on <URL>. Acquire the video, then run understand_media.py via py -3.12 on the saved file. Describe the extracted frames and pass that text as --visual-description-file. Return the helper JSON. If acquire fails, say the video was not watched. If ocr_engine or asr_engine is none, do not invent that channel."
 ```
 
 **Cursor / Claude / Grok agent:**

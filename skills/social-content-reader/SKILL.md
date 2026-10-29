@@ -22,7 +22,7 @@ compatibility: >
   heavy jobs; Mac and Linux fully support Codex skill load, fetch, and ASR.
 metadata:
   author: Anthony-Pan
-  version: "0.5.3"
+  version: "0.5.4"
   runtime: "Windows 24/7 OK for heavy jobs; Mac/Linux fully supported for Codex skill load + fetch + ffmpeg frames + ASR"
 ---
 
@@ -55,8 +55,8 @@ Teach the agent to **understand the video and the post**: what is on screen (vis
    2. **Frames:** `scripts/extract_frames.py` (`--mode fps` or `--mode scene`).
    3. **Burned-in text:** `scripts/ocr_frames.py` (Tesseract, or macOS Vision when available). If OCR is absent, say so.
    4. **Vision:** the host agent describes the video file and the frames with its video/vision tools (`visual_description`). This skill does not ship a vision model. Do not invent the picture.
-   5. **Speech:** official transcript/CC when the platform doc says it is real speech; otherwise `scripts/asr_local.py`.
-   6. **Understanding** is written from visuals + OCR + transcript. Put the share caption in `caption` only.
+   5. **Speech:** official transcript/CC when the platform doc says it is real speech; otherwise `scripts/asr_local.py`. The glue defaults to local ASR and does not upload.
+   6. **Understanding:** `scripts/understand_media.py --media FILE`. It writes the ContentRecord and a short summary from frames, OCR, host vision notes, and speech. It does not copy the caption or title into the body. `ocr_engine` / `asr_engine` are `none` when that engine is missing. `ok: true` needs at least one real channel. `complete: true` is pictures and speech. Pass `--visual-description-file` only after looking at the extracted frames.
 5. **If acquire fails, stop.** Say the video was not watched. Set `body_kind: unavailable` and `fetch_method: acquire_failed` or `blocked`. Do not write Understanding from the caption. A caption may be quoted only as a labeled side note.
 6. **Normalize** into the [ContentRecord](ARCHITECTURE.md#contentrecord-normalize-target).
 7. **Cite limits:** truncated frames, speech-only, missing OCR, auto-captions, login walls.
@@ -71,6 +71,22 @@ Platform docs:
 ## Media commands
 
 Resolve helpers relative to this `SKILL.md` when the skill is installed outside the repo.
+
+Understanding (validated local file already on disk):
+
+```bash
+python3 skills/social-content-reader/scripts/understand_media.py \
+  --media "$HOME/Media/video.mp4" \
+  --caption "share text, metadata only" \
+  --visual-description-file "$HOME/Media/vision.txt" \
+  --out-dir "$HOME/Media/understood"
+```
+
+```powershell
+py -3.12 skills\social-content-reader\scripts\understand_media.py --media "C:\Media\video.mp4" --caption "share text, metadata only" --visual-description-file "C:\Media\vision.txt" --out-dir "C:\Media\understood"
+```
+
+Exit 0 with `ok: true` means the summary is grounded in OCR text, accepted vision notes, or speech. `complete: true` means both pictures and speech. `blocked: true` with `engine: none` means that engine did not run and nothing was invented from the caption. The commands below are what the glue calls.
 
 Frames (ffmpeg):
 

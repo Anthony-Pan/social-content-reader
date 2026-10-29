@@ -11,7 +11,8 @@ PLATFORMS = SKILL / "platforms"
 class SkillContractTests(unittest.TestCase):
     def test_version_and_media_first_recipe(self):
         text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn('version: "0.5.3"', text)
+        self.assertIn('version: "0.5.4"', text)
+        self.assertIn("understand_media.py", text)
         self.assertIn("extract_frames.py", text)
         self.assertIn("ocr_frames.py", text)
         self.assertIn("asr_local.py", text)
@@ -21,9 +22,12 @@ class SkillContractTests(unittest.TestCase):
 
     def test_shared_video_recipe_documents_validated_acquire(self):
         text = (PLATFORMS / "_video-body.md").read_text(encoding="utf-8")
+        self.assertIn("understand_media.py", text)
         self.assertIn("extract_frames.py", text)
         self.assertIn("ocr_frames.py", text)
         self.assertIn("acquire_media.py", text)
+        self.assertIn("ocr_engine", text)
+        self.assertIn("asr_engine", text)
         self.assertIn("Content-Range", text)
         self.assertIn("error.mp4", text)
         self.assertIn("User export is last resort", text)

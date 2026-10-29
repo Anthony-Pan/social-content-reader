@@ -11,6 +11,7 @@ Small URL/ASR helpers; no platform downloader, login automation, or private API 
 | `extract_frames.py` | ffmpeg keyframes (`--mode fps` or `--mode scene`); JSON with paths and `timestamp_sec`. No URL download. |
 | `ocr_frames.py` | OCR local frames with tesseract, or macOS Vision (`ocr_vision.swift`) when `swiftc` exists. `engine: none` if neither is installed. |
 | `asr_local.py` | Transcribe a user-provided audio/video file using local Whisper or the official OpenAI Whisper API; JSON stdout |
+| `understand_media.py` | Join a validated local file to frames, OCR, host vision notes, and speech. Caption and title stay metadata. |
 
 Run:
 
@@ -24,7 +25,7 @@ python skills\social-content-reader\scripts\normalize_url.py "https://youtu.be/d
 
 `weixin.qq.com/sph/<id>` (optional `www`) returns `platform: wechat-channels`, `link_form: sph_share`, and `canonical_url: https://weixin.qq.com/sph/<id>`. `channels.weixin.qq.com` stays `wechat-channels` without an sph id.
 
-Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder. Video Understanding uses `extract_frames.py` + `ocr_frames.py` + the host vision tool + `asr_local.py`. See [platforms/_video-body.md](../platforms/_video-body.md).
+Heavy fetch/summarize belongs in Codex tasks guided by `platforms/*.md`, or in host MCP connectors — not in brittle scrapers checked into this folder. Video Understanding of a file already on disk is `understand_media.py` (frames + OCR + host vision notes + local ASR). See [platforms/_video-body.md](../platforms/_video-body.md).
 
 
 ## WeChat 公众号 article fetch
@@ -85,6 +86,35 @@ python3 skills/social-content-reader/scripts/ocr_frames.py --dir /tmp/scr-frames
 Tesseract languages fall back from `chi_sim+eng` to `eng` when Chinese data is not installed. macOS Vision: `--engine vision` compiles `ocr_vision.swift` with `swiftc` (Xcode). The host agent's vision tool is still required for a description of the picture; OCR is only the burned-in string.
 
 macOS: `brew install tesseract tesseract-lang`. Windows: `winget install --id UB-Mannheim.TesseractOCR --exact`. Linux: `tesseract-ocr` and, for Chinese, `tesseract-ocr-chi-sim`.
+
+## Understanding a local file
+
+`understand_media.py` is the join for a file that acquire (or the user) already saved. It does not download. `ffprobe` must see a positive duration and an audio or video stream. A URL, an empty file, or an undecodable file is `blocked` and is not described from the caption.
+
+```bash
+python3 skills/social-content-reader/scripts/understand_media.py \
+  --media "$HOME/Media/clip.mp4" \
+  --caption "share text, metadata only" \
+  --visual-description-file "$HOME/Media/vision.txt" \
+  --out-dir "$HOME/Media/understood"
+```
+
+```powershell
+py -3.12 skills\social-content-reader\scripts\understand_media.py --media "C:\Media\clip.mp4" --caption "share text, metadata only" --visual-description-file "C:\Media\vision.txt" --out-dir "C:\Media\understood"
+```
+
+Stdout is one JSON object:
+
+- `record` is the ContentRecord. `body_text` is a labeled join of pictures, on-screen text, and speech. `caption` and `title` are not copied into `body_text`, `speech_text`, `visual_text`, or `visual_description`.
+- `understanding` is a short summary of those same fields. When `ok` is true and a caption was passed, the caption appears only on a line marked metadata.
+- `ok: true` means at least one real channel produced evidence. `complete: true` means `body_kind: media_understanding` (pictures and speech). Speech-only is `transcript`. Picture-only is `visual`.
+- `ocr_engine` and `asr_engine` are `none` when that engine did not run. `evidence.ocr.reason` / `evidence.asr.reason` say `engine_missing`, `no_audio`, `no_frames`, or `official_track`. A missing engine does not become guessed text.
+- `--asr-backend` defaults to `local` and never calls the OpenAI API. `--asr-backend openai-api` uploads only when set. `--speech-file` supplies an official track and skips ASR. Text that matches the caption or the title is rejected as metadata.
+- `--visual-description-file` is host notes of the frames. It is ignored when no frames were read. This script does not ship a vision model.
+- `evidence.frames_json` is the extract receipt. A second pass can pass `--frames-json` for the same `--media` after the host has looked at the frames.
+- `has_audio: false` skips ASR. Speech stays empty.
+
+Exit 0 when `ok` is true. Exit 1 when the file was not validated or when no channel produced evidence (`blocked: true`).
 
 ## ASR usage and output
 

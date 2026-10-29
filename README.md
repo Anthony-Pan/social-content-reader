@@ -2,13 +2,15 @@
 
 **Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.5.3** acquires public Twitch clips and a VOD or `--section` of
-at most 600 seconds with yt-dlp (no cookies). A longer VOD is refused rather
-than silently trimmed. It does not claim Understanding or whole-broadcast
-access. v0.5.2 resolves a Reddit post URL to that post's hosted v.redd.it
-media. v0.5.1 hardens WeChat 公众号 article acquire. v0.5.0 saved 13
-video-platform sample files. 小红书 and 视频号 remain blocked on public paths.
-Captions remain metadata.
+Version **0.5.4** reads a validated local file with `understand_media.py`:
+frames, OCR, host vision notes, and local speech. A caption or title is not
+the body. Missing OCR or ASR is `engine: none`, not guessed text. v0.5.3
+acquires public Twitch clips and a VOD or `--section` of at most 600 seconds
+with yt-dlp (no cookies). A longer VOD is refused rather than silently trimmed.
+v0.5.2 resolves a Reddit post URL to that post's hosted v.redd.it media.
+v0.5.1 hardens WeChat 公众号 article acquire. v0.5.0 saved 13 video-platform
+sample files. 小红书 and 视频号 remain blocked on public paths. Captions remain
+metadata. The 13 saved samples were not re-read as Understanding on this box.
 
 Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
@@ -90,15 +92,17 @@ Platform recipes: [`platforms/`](skills/social-content-reader/platforms/). Share
 
 ## Media pipeline
 
-Default video success is a **local file**:
+Default video success is a **local file** passed to the glue helper:
 
 ```bash
-python3 skills/social-content-reader/scripts/extract_frames.py --media "$HOME/Media/clip.mp4" --mode fps --fps 1 --max-frames 24
-python3 skills/social-content-reader/scripts/ocr_frames.py --frames-json frames.json
-python3 skills/social-content-reader/scripts/asr_local.py --media "$HOME/Media/clip.mp4" --language auto --backend auto --model base
+python3 skills/social-content-reader/scripts/understand_media.py \
+  --media "$HOME/Media/clip.mp4" \
+  --caption "share text, metadata only" \
+  --visual-description-file "$HOME/Media/vision.txt" \
+  --out-dir "$HOME/Media/understood"
 ```
 
-Then the host agent describes the frames with its video/vision tools. Understanding is written from those three reads. The share caption is a side note. If acquire fails, say the video was not watched.
+That command validates the file with ffprobe, then runs `extract_frames.py`, `ocr_frames.py`, and local `asr_local.py`. The host agent still describes the extracted frames; pass those notes as `--visual-description-file`. The summary is grounded in OCR text, those notes, and speech. The share caption is a side note. `ocr_engine` / `asr_engine` are `none` when the engine is missing, and the helper does not invent that channel. If acquire fails, say the video was not watched. Do not point `understand_media.py` at a URL.
 
 Acquire first with `python3 skills/social-content-reader/scripts/acquire_media.py URL --out-dir ~/Media/acquired`.
 Setup and JSON contract: [scripts/README.md](skills/social-content-reader/scripts/README.md).

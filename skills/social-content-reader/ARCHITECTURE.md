@@ -101,12 +101,12 @@ Optional helper: `scripts/normalize_url.py` (canonical id extraction only).
 Platform docs name the acquire tool that actually works. The shared order:
 
 1. **Authorized host connector** when it supplies permitted media or actual speech. Speech alone still needs visual evidence.
-2. **Automatic public acquire:** `scripts/acquire_media.py URL --out-dir DIR`, following the platform recipe. It verifies a local video file, emits audio presence, duration and SHA-256, and stores a receipt. The 2026-10-26 matrix has 13 video-platform sample files, including TikTok's official embed and Bilibili's external-player tracks. 小红书 / 视频号 remain blocked. Reddit's public CDN works but its post resolver is blocked. 公众号 embedded media is unverified.
+2. **Automatic public acquire:** `scripts/acquire_media.py URL --out-dir DIR`, following the platform recipe. It verifies a local video file, emits audio presence, duration and SHA-256, and stores a receipt. The 2026-10-26 matrix has 13 video-platform sample files, including TikTok's official embed and Bilibili's external-player tracks. 小红书 / 视频号 remain blocked. Reddit post URLs can resolve to that post's v.redd.it media (v0.5.2); www/old JSON and redd.it can still be HTTP 403. 公众号 embedded media is unverified.
 3. **A file the user already attached.** Read it directly. Do not ask for an export while a documented automatic path is available.
-4. **Read the file:** `extract_frames.py` → `ocr_frames.py` → host vision/video tool → official speech track or `asr_local.py`. `has_audio: false` cannot establish speech.
+4. **Read the file:** `understand_media.py` on that validated local path. It runs `extract_frames.py`, `ocr_frames.py`, and local `asr_local.py`, and it accepts host vision notes plus an official speech track. `has_audio: false` cannot establish speech. `ocr_engine` / `asr_engine` are `none` when those engines are missing. A missing engine is not filled with the caption.
 5. **Acquire failed:** return `body_kind: unavailable` / `fetch_method: acquire_failed` or `blocked`. Do not substitute a share caption. Use a configured official account integration if available; user export is last resort after the automatic paths fail.
 
-For a file that is already on disk, start at step 5. A successful full read uses `body_kind: media_understanding` and `fetch_method: media_pipeline`. ASR-only is `transcript` / `user_media_asr` and must say graphics were not read.
+For a file that is already on disk, start at step 4 (`understand_media.py`). A successful full read uses `body_kind: media_understanding`, `complete: true`, and `fetch_method: media_pipeline`. ASR-only is `transcript` / `user_media_asr` and must say graphics were not read. Picture-only is `visual` and must say speech was not read.
 
 Written posts and articles use their platform fetch (connector, oEmbed text, public JSON, WebFetch). That text is the post. It does not describe an attached video.
 

@@ -1,7 +1,7 @@
 # STATUS — social-content-reader
 
-**Version:** 0.5.3
-**Updated:** 2026-10-29 — Twitch clip / bounded VOD section
+**Version:** 0.5.4
+**Updated:** 2026-10-29 — local-file Understanding
 
 v0.5.0 saved **13** video-platform sample files; 小红书 and 视频号 remain
 blocked within allowed public paths. **v0.5.1** hardens 公众号 article
@@ -9,8 +9,28 @@ acquire. **v0.5.2** resolves a Reddit **post URL** to that post's own
 v.redd.it DASH file when public embed HTML (or the `.json` listing) includes
 it. **v0.5.3** acquires a public Twitch clip, a VOD of at most 600 seconds,
 or one `--section` of at most 600 seconds, via yt-dlp with no cookies. A
-longer VOD is refused. It is not trimmed to a silent prefix. Listing a
-platform is not a claim of unrestricted access or completed Understanding.
+longer VOD is refused. It is not trimmed to a silent prefix. **v0.5.4**
+reads a validated local file (frames, OCR, host vision notes, local ASR)
+and will not sell a caption or title as the body. Listing a platform is
+not a claim of unrestricted access. Understanding is claimed only when
+`understand_media.py` returns evidence from that file.
+
+## Shipped (0.5.4)
+
+- `scripts/understand_media.py`: ffprobe gate, then `extract_frames.py`,
+  `ocr_frames.py`, and local `asr_local.py`. Optional `--speech-file` for an
+  official track and `--visual-description-file` for host notes of the frames.
+  No URL download, no cookie, no vision model, no API upload unless
+  `--asr-backend openai-api` is explicit.
+- ContentRecord `body_text` is only pictures, on-screen text, and speech.
+  Caption and title stay in their own fields. Text that merely repeats them
+  is dropped. `ok` requires a real channel. `complete` requires pictures and
+  speech. Missing OCR/ASR is `engine: none` and `blocked` when nothing else
+  was read.
+- Offline tests cover URL refusal, undecodable files, engine none, caption
+  rejection, silent video, audio-only, official tracks, and frame reuse.
+  A generated lavfi file on this box is the smoke in SMOKE_RESULTS. The
+  v0.5.0 platform samples were not on this disk, so they were not re-read.
 
 ## Shipped (0.5.3)
 
@@ -66,7 +86,10 @@ platform is not a claim of unrestricted access or completed Understanding.
   at most 600s can be, when it fits `--max-mb`. Subscriber-only media was
   not given a live sample; login/subscription errors stop with no cookie
   fallback. `?t=` does not seek.
-- Speech/vision Understanding on acquired samples as requested.
+- Understanding engines: this box has ffmpeg and tesseract. It does not have
+  faster-whisper or openai-whisper, so speech stays `asr_engine: none`.
+  No vision model is bundled; a human or host tool has to look at the frames
+  and pass notes. The 13 acquired platform files were not on this box.
 
 ## Locations
 
