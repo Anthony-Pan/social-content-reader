@@ -1,6 +1,6 @@
 # v0.5.0 acquisition matrix — Mac, 2026-10-26
 
-> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai), the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29), the [v0.5.3 Twitch addendum](#v053-addendum--twitch-clip-and-bounded-vod-box-2026-10-29), and the [v0.5.4 Understanding addendum](#v054-addendum--local-file-understanding-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum. The Twitch row is the clip file; VOD limits are the v0.5.3 addendum.
+> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai), the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29), the [v0.5.3 Twitch addendum](#v053-addendum--twitch-clip-and-bounded-vod-box-2026-10-29), the [v0.5.4 Understanding addendum](#v054-addendum--local-file-understanding-box-2026-10-29) (box lavfi), and the [v0.5.4 Mac real-sample Understanding addendum](#v054-addendum--mac-real-sample-understanding-2026-10-29-asiashanghai) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum. The Twitch row is the clip file; VOD limits are the v0.5.3 addendum.
 
 **Fresh live results (v0.5.0 Mac):** 13 saved video files across 15 video
 platforms; 小红书 and 视频号 did not yield media. 公众号 is an article
@@ -408,5 +408,79 @@ not quote the caption. That path is the unit test
 `test_missing_engines_are_none_and_caption_is_not_the_body`, and it is what
 GitHub Actions will hit until those packages are installed. CI installs
 ffmpeg only.
+
+Three v0.5.0 matrix files (YouTube, Douyin, Twitch) were later re-read on a
+Mac. See the [Mac real-sample Understanding addendum](#v054-addendum--mac-real-sample-understanding-2026-10-29-asiashanghai).
+
+---
+
+# v0.5.4 addendum — Mac real-sample Understanding (2026-10-29 Asia/Shanghai)
+
+Closes the "acquired platform samples were not re-read" wall from the box
+lavfi smoke above. Same helper: `skills/social-content-reader/scripts/understand_media.py`.
+No URL download, no cookie, no `--asr-backend openai-api`.
+
+**Host:** Anthony Mac, Python 3.12.16 venv `~/Developer/scr-proof/.venv-asr`
+with `faster-whisper==1.2.1`, `av==13.1.0`, `onnxruntime==1.31.1`. ffmpeg/ffprobe
+9.0.2. OCR: macOS Vision (`ocr_engine: vision`; tesseract not installed). ASR:
+`--asr-backend local --asr-model base`. Media files are the v0.5.0 matrix
+SHA-256s under `~/Developer/scr-proof/matrix-2026-10-26/`.
+
+Repo head when run: `741caa9` (v0.5.4). Authoritative stdout: each platform's
+`understand-with-vision.json` (second pass: `--frames-json` reuse +
+`--visual-description-file` after host Read of extracted JPEGs). First-pass
+`understand.json` kept for comparison. Proof Mac paths:
+`~/Developer/scr-proof/understand-2026-10-29/`. Box mirror:
+`/workspace/scr-understand-proof/`. Media files, JSON proofs, and machine
+notes are not committed.
+
+| Clip | Source | duration_sec | SHA-256 prefix | Pass-2 ok / complete / blocked | asr_engine | ocr_engine | body_kind |
+| --- | --- | ---: | --- | --- | --- | --- | --- |
+| YouTube | [jNQXAC9IVRw](https://www.youtube.com/watch?v=jNQXAC9IVRw) `youtube_488c5108c18e9ac4.mp4` | 19.014 | `488c5108…` | true / **true** / false | faster-whisper | vision | media_understanding |
+| Douyin | [7696098282904259850](https://www.douyin.com/video/7696098282904259850) `douyin_2d5c9591cdc9468a.mp4` | 48.833333 | `2d5c9591…` | true / **true** / false | faster-whisper | vision | media_understanding |
+| Twitch | [FaintLightGullWholeWheat](https://clips.twitch.tv/FaintLightGullWholeWheat) `twitch_9d3021eae0ac932a.mp4` | 32.099 | `9d3021ea…` | true / **true** / false | faster-whisper | vision | media_understanding |
+
+### YouTube (Me at the zoo)
+
+- Frames: 12 @ 1 fps (`truncated: true`). Pass-2 `frames.reason: reused`.
+- OCR: empty text on all frames (`OCR ran and found no burned-in text.`).
+- ASR (`speech_text`): `All right, so here we are, one of the elephants. The cool thing about these guys is that they have really, really, really long punks, and that's cool. And that's pretty much all there is to say.`
+- Pass 1 (no vision notes): `ok: true`, `complete: false`, `body_kind: transcript`, `fetch_method: user_media_asr`.
+- Pass 2: host notes describe a young man in a red/grey jacket before elephants behind a cable zoo fence (low-res outdoor day). `complete: true`, `fetch_method: media_pipeline`. Title metadata `Me at the zoo` stays out of `body_text` channels as speech/pictures.
+
+### Douyin
+
+- Frames: 16 @ 1 fps (clip ~49s; truncated). `--language zh`.
+- OCR (`vision`): non-empty on-screen UI — Terminal/Claude Code chrome, Douyin watermark `抖音号：54277632051`, prompt fragments such as `睡不着，陪我听首`, music/widget text (noisy; kept as OCR, not rewritten into a story).
+- ASR (`speech_text`, pass-2, quoted as emitted — **garbled vs lyrics**): `我爱的风景我要送你日服我的想念记住在表爱的明星天我要送你日服我的爱呢今天真心吧是你…` (Whisper `base` mishears; on-screen song chrome shows 日不落 / 蔡依林 — not substituted into `speech_text`).
+- Host vision notes: macOS desktop screen-recording; Claude Code terminal; lyric overlays; Music widget 日不落.
+- Pass 1 already `complete: true` from OCR+speech without vision notes; pass 2 keeps `complete: true` with `visual_description` filled.
+
+### Twitch clip
+
+- Frames: 16 @ 1 fps (clip ~32s; truncated).
+- OCR: early frames include HUD strings such as `ATTACK THE MONASTERY`, `PRE-ALPHA`, ammo/`214m` fragments (noisy usernames).
+- ASR (`speech_text`): commentary starting `SMG, nice close call as weapon. That's right, gives the get to full effect.…` through event-floor lines about concentration / players / "Getting the troops to fall in line, man."
+- Host vision notes: FPS pre-alpha gameplay (LMG, grassy hill, damaged structure) then cut to dim dual-PC / event-floor seating with headphones and monitors.
+- Title metadata from clip page `<title>`: `EA - Twitch` (metadata only).
+
+### Shared limits
+
+- Every run records `Frame extraction hit --max-frames; later frames were not read.`
+- No inventing of missing OCR/ASR. Caption fields empty on these three. No openai-api upload.
+- This does **not** claim 小红书 or 视频号 Understanding (those platforms still have no acquired media in the matrix).
+
+```bash
+# Replay one clip (Mac, after venv + faster-whisper install):
+export HF_ENDPOINT=https://hf-mirror.com   # optional; needed if HF hub is slow
+~/Developer/scr-proof/.venv-asr/bin/python -B \
+  skills/social-content-reader/scripts/understand_media.py \
+  --media ~/Developer/scr-proof/matrix-2026-10-26/youtube/youtube_488c5108c18e9ac4.mp4 \
+  --out-dir ~/Developer/scr-proof/understand-2026-10-29/youtube/frames \
+  --frames-json ~/Developer/scr-proof/understand-2026-10-29/youtube/frames/frames/frames.json \
+  --visual-description-file ~/Developer/scr-proof/understand-2026-10-29/youtube/visual.txt \
+  --platform youtube --url 'https://www.youtube.com/watch?v=jNQXAC9IVRw' \
+  --asr-backend local --asr-model base --language auto --ocr-engine auto
+```
 
 
