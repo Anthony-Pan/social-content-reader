@@ -28,8 +28,25 @@ Use this recipe from every platform doc when the user asks what a video shows or
    Tesseract when it is on PATH (`chi_sim+eng` when language data exists, else `eng`). On macOS, `--engine vision` uses `ocr_vision.swift` via `swiftc` when Tesseract is absent. If the helper returns `engine: none`, do not invent on-screen text. Say OCR did not run.
 4. **Vision / video description.** This skill does not bundle a vision model. The host agent looks at the **video file and the extracted frames** with its own video/vision tools and writes `visual_description`: people, graphics, burned-in words, cuts, on-screen claims. If the host has no vision tool, say visual description was not produced.
 5. **Speech.** Official transcript/CC tracks when that platform documents them (YouTube, Bilibili CC, Vimeo text tracks, Twitch CC). Otherwise [scripts/asr_local.py](../scripts/asr_local.py) on the local file. Map ASR `text` to `speech_text`. ASR does not see pictures. A transcript-only result is speech, not full video Understanding, unless frames were also read.
-6. **Write Understanding** from `visual_description` + OCR `text` + `speech_text`. Put any share caption in `caption` and mention it only as a labeled side note.
-7. **Acquire failure.** If step 1 does not yield a file, stop. Set `body_kind: unavailable` and `fetch_method: acquire_failed` (or `blocked` when the platform wall is the reason). Say the video was not watched. Do not write Understanding from the caption. A caption may sit in `caption` so the user can see the share text; it must be labeled metadata.
+6. **Write Understanding** with [scripts/understand_media.py](../scripts/understand_media.py). It joins frames, OCR, host vision notes, and speech, and it refuses a caption or title as the body:
+
+   ```bash
+   python3 skills/social-content-reader/scripts/understand_media.py \
+     --media "$HOME/Media/clip.mp4" \
+     --caption "share text, metadata only" \
+     --visual-description-file "$HOME/Media/vision.txt" \
+     --out-dir "$HOME/Media/understood"
+   ```
+
+   ```powershell
+   py -3.12 skills\social-content-reader\scripts\understand_media.py --media "C:\Media\clip.mp4" --caption "share text, metadata only" --visual-description-file "C:\Media\vision.txt" --out-dir "C:\Media\understood"
+   ```
+
+   The file must validate: `ffprobe` reports a positive duration and an audio or video stream. URLs are refused. The helper then runs the frame, OCR, and local ASR commands above. `--asr-backend` defaults to `local` (faster-whisper, then openai-whisper) and does not upload. `--asr-backend openai-api` is the only path that sends audio to OpenAI, and only when that flag is set. `--speech-file` is an official transcript and skips ASR. `--visual-description-file` is accepted only when frames were read; notes that merely repeat the caption or title are dropped.
+
+   `ok: true` means at least one real channel produced evidence (OCR text, accepted vision notes, or speech). `complete: true` means pictures and speech (`body_kind: media_understanding`). `ocr_engine` and `asr_engine` are `none` when that engine is missing. If both are missing and no vision notes were accepted, the result is `blocked: true`, `fetch_method: blocked`, and the understanding text does not quote the caption. A later pass can pass `--frames-json` from `evidence.frames_json` after the host has looked at the frames.
+
+7. **Acquire failure.** If step 1 does not yield a file, stop. Set `body_kind: unavailable` and `fetch_method: acquire_failed` (or `blocked` when the platform wall is the reason). Say the video was not watched. Do not write Understanding from the caption. A caption may sit in `caption` so the user can see the share text; it must be labeled metadata. Do not call `understand_media.py` on a URL to fill that gap.
 
 ## ContentRecord fields
 

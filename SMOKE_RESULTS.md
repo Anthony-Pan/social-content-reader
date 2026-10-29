@@ -1,6 +1,6 @@
 # v0.5.0 acquisition matrix — Mac, 2026-10-26
 
-> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai), the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29), and the [v0.5.3 Twitch addendum](#v053-addendum--twitch-clip-and-bounded-vod-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum. The Twitch row is the clip file; VOD limits are the v0.5.3 addendum.
+> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai), the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29), the [v0.5.3 Twitch addendum](#v053-addendum--twitch-clip-and-bounded-vod-box-2026-10-29), and the [v0.5.4 Understanding addendum](#v054-addendum--local-file-understanding-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum. The Twitch row is the clip file; VOD limits are the v0.5.3 addendum.
 
 **Fresh live results (v0.5.0 Mac):** 13 saved video files across 15 video
 platforms; 小红书 and 视频号 did not yield media. 公众号 is an article
@@ -367,5 +367,46 @@ Receipts: [`twitch-vod-2026-10-29.json`](skills/social-content-reader/references
 Subscriber-only VODs were not live-sampled. A login or subscription error
 stops; there is no cookie fallback. This does not mean every Twitch URL
 works, a section is not the whole VOD, and none of this is Understanding.
+
+---
+
+# v0.5.4 addendum — local-file Understanding (box, 2026-10-29)
+
+Helper: `skills/social-content-reader/scripts/understand_media.py`. No
+download, cookie, or API upload. ffmpeg 6.1.1, ffprobe, tesseract 5.3.4
+(`eng`; `chi_sim` not installed). `faster-whisper` and `openai-whisper` are
+not installed. No acquired platform sample from the v0.5.0 matrix was on
+this disk (`~/Developer/scr-proof` is not this box), so this smoke uses a
+one-second generated file, not a YouTube/Twitch/Douyin sample.
+
+```bash
+ffmpeg -f lavfi -i testsrc=duration=1:size=320x240:rate=10 \
+  -f lavfi -i sine=frequency=440:duration=1 \
+  -map 0:v -map 1:a -shortest -pix_fmt yuv420p /tmp/scr-understand-smoke/sample.mp4
+python3 -B skills/social-content-reader/scripts/understand_media.py \
+  --media /tmp/scr-understand-smoke/sample.mp4 \
+  --out-dir /tmp/scr-understand-smoke/out --max-frames 4 --fps 1 \
+  --caption "CAPTION_SENTINEL_share_text" --title "TITLE_SENTINEL_upload_name"
+```
+
+| Check | Result |
+| --- | --- |
+| ffprobe | duration 1.0s, h264 + aac, `has_video` and `has_audio` true. SHA-256 `3af5ba4c56ba7cb91e66bfcb850ea683c75fa53ec4925990b5ca1757506bcef1`. |
+| Frames | 1 JPEG. The frame is a color-bar circle, a rainbow stripe, and a white numeral 0. |
+| OCR | `ocr_engine: tesseract`, language `eng`, text `[0.00s] On`. That fragment does not match the numeral. It was kept as OCR output, not corrected into a story. |
+| ASR | `asr_engine: none`, reason `engine_missing`. `speech_text` empty. No model download and no API call. |
+| Caption / title | Stored on `caption` and `title`. Absent from `body_text`, `speech_text`, `visual_text`, and `visual_description`. |
+| First pass, no vision notes | `ok: true`, `complete: false`, `blocked: false`, `body_kind: visual`, `fetch_method: media_pipeline`. Understanding says pictures only and `ASR engine: none`. |
+| Second pass | `--frames-json` reused the same frames (`reason: reused`). Host notes described the color bars and the numeral 0 after looking at `frame_0001.jpg`. `visual_description` is those notes. `complete` stays false because speech was not read. |
+
+`body_text` on the second pass is the picture notes plus the OCR line. It does
+not contain the caption sentinel. The media file was not committed.
+
+A machine without tesseract and without a Whisper package gets `ocr_engine:
+none`, `asr_engine: none`, `blocked: true`, and an understanding that does
+not quote the caption. That path is the unit test
+`test_missing_engines_are_none_and_caption_is_not_the_body`, and it is what
+GitHub Actions will hit until those packages are installed. CI installs
+ffmpeg only.
 
 
