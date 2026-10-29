@@ -60,24 +60,6 @@
 
 ---
 
-# v0.5.4 hardening — local-file Understanding (box, 2026-10-29)
-
-- New `understand_media.py`. Public acquire paths are unchanged. This helper
-  does not download, read cookies, or call a private API.
-- A local file is validated with ffprobe (positive duration and an audio or
-  video stream) before frames, OCR, or ASR. A URL is refused. An undecodable
-  file is not described.
-- The summary is a labeled join of OCR text, host vision notes, and speech.
-  Caption and title are metadata. Matching supplied "vision" or "speech" is
-  dropped. Default ASR is local only; `openai-api` uploads only when named.
-- Missing OCR or ASR is `engine: none`. If that leaves no evidence, the result
-  is `blocked`, not a caption Understanding.
-- This box: generated color-bar file, tesseract read a fragment, ASR engine
-  none, host notes taken from the extracted frame. No platform sample file
-  was on disk. See SMOKE_RESULTS v0.5.4 addendum.
-
----
-
 # v0.5.1 hardening — WeChat 公众号 (box, 2026-10-26 Asia/Shanghai)
 
 - New `fetch_wechat_article.py`: stdlib-only HTTPS GET with a fixed Chrome
