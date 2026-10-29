@@ -1,6 +1,6 @@
 # v0.5.0 acquisition matrix — Mac, 2026-10-26
 
-> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai) and the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum.
+> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai), the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29), and the [v0.5.3 Twitch addendum](#v053-addendum--twitch-clip-and-bounded-vod-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum. The Twitch row is the clip file; VOD limits are the v0.5.3 addendum.
 
 **Fresh live results (v0.5.0 Mac):** 13 saved video files across 15 video
 platforms; 小红书 and 视频号 did not yield media. 公众号 is an article
@@ -37,7 +37,7 @@ No ASR/Understanding was claimed in this acquisition matrix.
 | facebook | [1195289147628387](https://www.facebook.com/reel/1195289147628387); public_page_media | `facebook/facebook_cc12fd22535bfa0d.mp4` | 622802 | 9.566667 | no | Target DASH manifest has video representations only; visual evidence only. |
 | telegram | [402](https://t.me/telegram/402); public_page_media | `telegram/telegram_2604a7144d849a8e.mp4` | 1408169 | 8.0 | yes | Public sample only; gated/deleted URLs can still fail. |
 | vimeo | [22439234](https://vimeo.com/22439234); yt_dlp | `vimeo/vimeo_b7b62529f65a3d07.mp4` | 20561134 | 185.877333 | yes | 76979871 login/DRM rejected; alternate 22439234 saved. |
-| twitch | [FaintLightGullWholeWheat](https://clips.twitch.tv/FaintLightGullWholeWheat); public_page_media | `twitch/twitch_9d3021eae0ac932a.mp4` | 16299328 | 32.099 | yes | Clip verified; long VODs unverified. |
+| twitch | [FaintLightGullWholeWheat](https://clips.twitch.tv/FaintLightGullWholeWheat); public_page_media on Mac, `twitch_ytdlp_public` on the v0.5.3 box (same SHA-256) | `twitch/twitch_9d3021eae0ac932a.mp4` | 16299328 | 32.099 | yes | Clip matches v0.5.0. A VOD longer than 600s is refused unless `--section` names a window that fits `--max-mb`. See the v0.5.3 addendum. |
 | douyin | [7696098282904259850](https://www.douyin.com/video/7696098282904259850); douyin_mobile_player | `douyin/douyin_2d5c9591cdc9468a.mp4` | 8382047 | 48.833333 | yes | Public sample only; gated/deleted URLs can still fail. |
 | bilibili | [BV17x411w7KC](https://www.bilibili.com/video/BV17x411w7KC); browser_media_tracks | `bilibili/bilibili_ee02d4fb68da3725.mp4` | 6445696 | 199.319433 | yes | Main/view API HTTP 412. External player works for valid sample. error.mp4 for BV1GJ411x7h7 rejected. |
 | xiaohongshu | [6411cf99000000001300b6d9](https://www.xiaohongshu.com/explore/6411cf99000000001300b6d9); public page attempt | **FAIL** | — | — | — | Two public notes returned IP-risk 300031/300012; stopped. |
@@ -68,8 +68,10 @@ No ASR/Understanding was claimed in this acquisition matrix.
   isolates message 402. The `/s/` preview returns nearby messages; downloading
   its first video would give the wrong post.
 - X: yt-dlp explicitly selects public syndication rather than its private
-  GraphQL path. LinkedIn reads public video `data-sources`. Twitch reads the
-  public clip's actual video src. Vimeo uses its public embedded player.
+  GraphQL path. LinkedIn reads public video `data-sources`. Twitch on this Mac
+  read the public clip's video src. v0.5.3 saves that same clip with public
+  yt-dlp and uses the same downloader for a bounded VOD section. Vimeo uses
+  its public embedded player.
 
 ## Remaining walls / researched routes
 
@@ -97,7 +99,9 @@ No ASR/Understanding was claimed in this acquisition matrix.
   failed. Historical body-reading results below remain historical.
 - Twitch's [official clips download API](https://dev.twitch.tv/docs/api/reference/#get-clips-download)
   is an additional authorized broadcaster/editor route, researched but not
-  executed without scoped tokens. Long VODs remain unverified.
+  executed without scoped tokens. **v0.5.3** acquires public clips and a VOD
+  or `--section` of at most 600 seconds with uncredentialed yt-dlp. A longer
+  VOD is refused. See the addendum.
 
 ## Validation and replay
 
@@ -332,5 +336,36 @@ cookie. oEmbed on a full post URL returned title and author only; that was not
 used as the file or as `body_text`.
 
 This does not mean every Reddit URL works, and it is not Understanding.
+
+---
+
+# v0.5.3 addendum — Twitch clip and bounded VOD (box, 2026-10-29)
+
+Helper: `skills/social-content-reader/scripts/acquire_twitch.py`, called from
+`acquire_media.py` for a Twitch clip or `/videos/{id}` URL. yt-dlp 2026.10.26
+with `--ignore-config`. No cookies, netrc, or Helix token. ffmpeg 6.1.1.
+Success required ffprobe (positive duration and a video stream) and
+`ffmpeg -f null` exit 0. Media files were not committed. A window longer
+than 600 seconds is refused and is not saved as a prefix.
+
+Receipts: [`twitch-vod-2026-10-29.json`](skills/social-content-reader/references/twitch-vod-2026-10-29.json).
+
+| Sample | Result | Notes |
+| --- | --- | --- |
+| [clip FaintLightGullWholeWheat](https://clips.twitch.tv/FaintLightGullWholeWheat) | **FILE OK** | `twitch_ytdlp_public`, full clip, 1080p. 16,299,328 bytes, 32.099s, h264+aac. SHA-256 `9d3021eae0ac932a520b5ebedf995ec14901d882d97b27eeccbbb5b9440a4317`, the same file as the v0.5.0 public-player sample. |
+| [VOD 2128758214](https://www.twitch.tv/videos/2128758214) | **FILE OK** with `--max-mb 400` | 402s highlight, source 1080p only. 256,357,852 bytes, 401.932s, aac+h264, `twitch_full: true`. |
+| Same VOD, default `--max-mb 128` | **FAIL** before download | Estimate 361,800,000 bytes at 1080p. No file. |
+| Same VOD `--section 10-25` | **FILE OK** | 11,068,048 bytes, 15.134s, 1080p. `twitch_source_duration_sec` stays 402. |
+| [VOD 2096474672](https://www.twitch.tv/videos/2096474672) | **FAIL** | 15434s (4:17:14). Refused. No prefix. |
+| Same VOD `--section 0-20` | **FILE OK** | 3,407,834 bytes, 20.025s, 480p, h264+aac. |
+| Same VOD `--section 1:00:00-1:00:20` | **FILE OK** | 3,557,056 bytes, 20.019s, 480p. Not the opening of the VOD. |
+| Same VOD `?t=1h2m3s` | **FAIL** | Bookmark 3723s ignored. Still over 600s. |
+| Same VOD `--section 0-601` | **FAIL** | Over 600s. Nothing downloaded. |
+| `/videos/1` | **FAIL** | Does not exist. |
+| `twitch.tv/twitch` | **FAIL** | Channel/live URL. Not recorded. |
+
+Subscriber-only VODs were not live-sampled. A login or subscription error
+stops; there is no cookie fallback. This does not mean every Twitch URL
+works, a section is not the whole VOD, and none of this is Understanding.
 
 

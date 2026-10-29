@@ -1,3 +1,24 @@
+# v0.5.3 hardening — Twitch clip and bounded VOD (box, 2026-10-29)
+
+- Public clips and `/videos/{id}` go through stock yt-dlp `--ignore-config`.
+  No cookies, netrc, browser profile, Helix token, or new GQL client.
+- Clip `FaintLightGullWholeWheat` saved the same 16,299,328-byte file as the
+  v0.5.0 public player (SHA-256 `9d3021eae0ac932a…`). ffprobe 32.099s, h264+aac.
+- A VOD or one `--section` may be at most 600 seconds. The 15434s VOD
+  `2096474672` is refused with no prefix file. `--section 0-20` and
+  `--section 1:00:00-1:00:20` each saved ~20s of 480p with audio. Duration
+  must match that window.
+- The 402s source-only VOD `2128758214` is over the default 128 MB estimate
+  and is refused before download. `--max-mb 400` saved 256,357,852 bytes,
+  401.932s, audio+video. `--section 10-25` saved 15.134s.
+- `?t=` is not a range. Channel, live, list, collection, and missing IDs
+  fail closed. Subscriber-only was not live-sampled; those errors do not
+  fall through to cookies.
+- Oversize outputs are deleted. Captions, chat, and titles are not body text.
+  This is not whole-broadcast support and not Understanding.
+
+---
+
 # v0.5.2 hardening — Reddit post URL → media (box, 2026-10-29)
 
 - `resolve_reddit.py` reads a public post listing `.json` (first `t3` only).

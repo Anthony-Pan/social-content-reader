@@ -2,12 +2,13 @@
 
 **Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.5.2** resolves a Reddit post URL to that post's hosted
-v.redd.it media (public `.json` listing, then `embed.reddit.com` when the
-listing is blocked) and validates the DASH file. It does not claim
-Understanding or universal access. v0.5.1 hardens WeChat 公众号 article
-acquire. v0.5.0 saved 13 video-platform sample files. 小红书 and 视频号 remain
-blocked on public paths. Captions remain metadata.
+Version **0.5.3** acquires public Twitch clips and a VOD or `--section` of
+at most 600 seconds with yt-dlp (no cookies). A longer VOD is refused rather
+than silently trimmed. It does not claim Understanding or whole-broadcast
+access. v0.5.2 resolves a Reddit post URL to that post's hosted v.redd.it
+media. v0.5.1 hardens WeChat 公众号 article acquire. v0.5.0 saved 13
+video-platform sample files. 小红书 and 视频号 remain blocked on public paths.
+Captions remain metadata.
 
 Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
@@ -78,7 +79,7 @@ or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](SMOKE_RESULTS
 | Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | Telegram | Public message widget → scoped video src | Yes; audio + video |
 | Vimeo | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
-| Twitch | Public clip player video src → MP4 | Yes; audio + video |
+| Twitch | Public yt-dlp clip, or VOD/section ≤ 600s | Yes when that window fits `--max-mb`; longer VODs refused |
 | Douyin 抖音 | Mobile share player → playwm → MP4 | Yes; audio + video |
 | Bilibili 哔哩哔哩 | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
 | 小红书 / Xiaohongshu | Public note page → playing video src (attempted) | NO; risk wall |

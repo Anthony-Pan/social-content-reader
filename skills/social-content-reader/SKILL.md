@@ -22,7 +22,7 @@ compatibility: >
   heavy jobs; Mac and Linux fully support Codex skill load, fetch, and ASR.
 metadata:
   author: Anthony-Pan
-  version: "0.5.2"
+  version: "0.5.3"
   runtime: "Windows 24/7 OK for heavy jobs; Mac/Linux fully supported for Codex skill load + fetch + ffmpeg frames + ASR"
 ---
 
@@ -162,7 +162,7 @@ or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](../../SMOKE_R
 | Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | Telegram | Public message widget → scoped video src | Yes; audio + video |
 | Vimeo | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
-| Twitch | Public clip player video src → MP4 | Yes; audio + video |
+| Twitch | Public yt-dlp clip, or VOD/section ≤ 600s | Yes for the sampled clip (same file as v0.5.0) and for a ≤600s VOD or `--section` that fits `--max-mb`. A longer VOD is refused, not silently trimmed. |
 | Douyin 抖音 | Mobile share player → playwm → MP4 | Yes; audio + video |
 | Bilibili 哔哩哔哩 | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
 | 小红书 / Xiaohongshu | Public note page → playing video src (attempted) | NO; risk wall |

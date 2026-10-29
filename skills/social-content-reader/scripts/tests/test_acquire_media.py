@@ -101,10 +101,19 @@ class ValidationTests(unittest.TestCase):
 
     def test_failure_has_no_success_path_or_body(self):
         with patch.object(a.shutil, 'which', return_value='/bin/tool'), \
-             patch.object(a, 'acquire_browser', side_effect=a.AcquireError('login wall')), tempfile.TemporaryDirectory() as d:
+             patch.object(a, 'acquire_public', side_effect=a.TwitchError('login wall')), tempfile.TemporaryDirectory() as d:
             result = a.acquire('https://clips.twitch.tv/TestClip', Path(d))
             self.assertFalse(result['ok']);self.assertEqual(result['body_kind'], 'unavailable')
             self.assertNotIn('path', result);self.assertNotIn('body_text', result)
+            self.assertIn('login wall', result['error'])
+            self.assertEqual(list(Path(d).iterdir()), [])
+
+    def test_section_rejected_off_twitch(self):
+        with patch.object(a.shutil, 'which', return_value='/bin/tool'), tempfile.TemporaryDirectory() as d:
+            result = a.acquire('https://www.youtube.com/watch?v=jNQXAC9IVRw', Path(d), section='0-10')
+            self.assertFalse(result['ok'])
+            self.assertIn('--section', result['error'])
+            self.assertNotIn('path', result)
             self.assertEqual(list(Path(d).iterdir()), [])
 
     def test_downloader_ignores_user_config_and_never_reads_cookies(self):

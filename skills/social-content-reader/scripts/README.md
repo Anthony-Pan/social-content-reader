@@ -180,8 +180,8 @@ Sources: [faster-whisper usage and decoding requirements](https://github.com/SYS
 
 `acquire_media.py URL --out-dir ~/Media/proof` tries a documented public player
 or yt-dlp route in a fresh context. Requires `ffmpeg`, `ffprobe`, and `yt-dlp` for
-YouTube, X, Vimeo, direct `v.redd.it` DASH, and Reddit post URLs (public `.json`
-or `embed.reddit.com`, then DASH). Playwright Chromium is for browser routes. Install Playwright
+YouTube, X, Vimeo, direct `v.redd.it` DASH, Reddit post URLs (public `.json`
+or `embed.reddit.com`, then DASH), and Twitch clips/VODs. Playwright Chromium is for browser routes. Install Playwright
 in a venv (`python3 -m venv .venv-acquire; .venv-acquire/bin/pip install playwright;
 .venv-acquire/bin/playwright install chromium`). Use that venv Python to run the helper, or activate it before the `python3`
 examples. No browser profile or cookie file is read. The existing Douyin helper is routed through the same file validation.
@@ -195,8 +195,9 @@ No Understanding is produced by a downloader. Failure: exit 1, `ok: false`,
 Partial downloads live in a temporary directory and are removed on failure.
 
 `--max-mb 128` bounds each download and the published output; `--wait-seconds 8`
-is the public player load allowance (1–60). Downloader calls ignore local
-yt-dlp configuration. Browser routes reject error.mp4 placeholders. HTTP 206
+is the public player load allowance (1–60). `--section START-END` is Twitch-only
+and at most 600 seconds. A longer Twitch VOD is refused; `?t=` is not a range.
+Downloader calls ignore local yt-dlp configuration. Browser routes reject error.mp4 placeholders. HTTP 206
 is accepted only when Content-Range and actual bytes cover the entire file.
 Bilibili's unencrypted video/audio tracks are muxed locally without re-encoding.
 See [the live matrix](../../../SMOKE_RESULTS.md) for actual successes and walls.
