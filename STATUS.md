@@ -1,43 +1,47 @@
 # STATUS — social-content-reader
 
-**Version:** 0.5.1
-**Updated:** 2026-10-26 Asia/Shanghai — WeChat 公众号 harden
+**Version:** 0.5.2
+**Updated:** 2026-10-29 — Reddit post URL → hosted media
 
 v0.5.0 saved **13** video-platform sample files; 小红书 and 视频号 remain
 blocked within allowed public paths. **v0.5.1** hardens 公众号 article
-acquire: Chrome desktop UA + stdlib HTTPS returns substantive `#js_content`
-(SSR `visibility:hidden;opacity:0` accepted). Embedded `mpvideo` vids are
-extracted; playable embed files remain best-effort / network-dependent.
-视频号 sph still has no public media URL.
-
-Listing a platform is not a claim of unrestricted access or completed
+acquire. **v0.5.2** resolves a Reddit **post URL** to that post's own
+v.redd.it DASH file when public embed HTML (or the `.json` listing) includes
+it. Listing a platform is not a claim of unrestricted access or completed
 Understanding.
 
-## Shipped (0.5.1)
+## Shipped (0.5.2)
 
-- `scripts/fetch_wechat_article.py`: stdlib HTTPS, fixed Chrome UA, substantive
-  body gate, captcha/`环境异常` rejection, mpvideo embed extraction, optional
-  first-embed media attempt. Article ok without ffmpeg.
-- `acquire_media.py` routes `mp.weixin.qq.com` → fetch_wechat_article.
-- Offline fixtures + unit tests for SSR body, captcha shell, display:none,
-  embed ids, and acquire wiring without ffmpeg.
-- Docs: `platforms/wechat-article.md`, this STATUS, SMOKE_RESULTS addendum,
-  HARDEN_NOTES, scripts/README, SKILL metadata `0.5.1`.
+- `scripts/resolve_reddit.py`: public post `.json` first; `embed.reddit.com`
+  when the listing is an HTTP block. Matches `t3_{id}` only. Crosspost
+  screenview URL and a single gallery video are accepted. Two hosted videos
+  are refused. Signed player queries are dropped. No cookie jar.
+- `acquire_media.py` downloads the resulting unsigned `DASHPlaylist.mpd` with
+  the existing yt-dlp path and ffprobe gate. Direct `v.redd.it` URLs skip the
+  resolver. Method `reddit_post_embed` or `reddit_post_json`.
+- Offline fixtures: exact post vs comment/recommendation, crosspost, gallery,
+  image/off-site, quarantine (no cookie opt-in), short-link 403, token leak.
+- Live box smoke: three post URLs saved valid files (one matches the v0.5.0
+  CDN bytes). `redd.it`, bare `/comments/{id}`, and a two-video post fail
+  closed. See SMOKE_RESULTS v0.5.2 addendum.
 
 ## Evidence
 
 - Matrix (video): [SMOKE_RESULTS.md](SMOKE_RESULTS.md) / Mac
   `~/Developer/scr-proof/matrix-2026-10-26/`
-- 公众号 harden: `/workspace/scr-proof/wechat-gzh-2026-10-26/` (box) with live
-  receipts for Rsa + Anm articles.
-- Unit suite: run `python3 -m unittest discover -s skills/social-content-reader/scripts/tests`
+- 公众号 harden: `/workspace/scr-proof/wechat-gzh-2026-10-26/` (box)
+- Reddit post URLs: [references/reddit-post-2026-10-29.json](skills/social-content-reader/references/reddit-post-2026-10-29.json)
+- Unit suite: `python3 -m unittest discover -s skills/social-content-reader/scripts/tests`
 
 ## Remaining work
 
 - 小红书 / 视频号: no successful general public media route.
 - 公众号 embed media: public player often returns 「视频不存在」 from some
   networks; Mac historically saved one sample — not claimed universal.
-- Reddit post-to-media resolution; long Twitch VODs.
+- Reddit: `www`/`old` listing JSON and `redd.it` redirects are HTTP 403 on
+  this box; post URLs need a subreddit or user in the path when JSON is
+  blocked; multi-video posts are refused; quarantined subs are not opted into.
+- Long Twitch VODs.
 - Speech/vision Understanding on acquired samples as requested.
 
 ## Locations

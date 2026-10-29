@@ -1,0 +1,77 @@
+{
+  "version": "0.5.2",
+  "when": "2026-10-29",
+  "where": "box",
+  "notes": [
+    "www.reddit.com and old.reddit.com post HTML and .json returned HTTP 403 Blocked.",
+    "embed.reddit.com HTML for the same posts exposed that post's v.redd.it id.",
+    "Download is unsigned DASHPlaylist.mpd via yt-dlp --ignore-config. No cookies.",
+    "Signed HLS query strings from the player were not stored.",
+    "ffprobe required a positive duration and a video stream. ffmpeg decode exit 0.",
+    "These files are acquisition evidence, not Understanding."
+  ],
+  "passed": [
+    {
+      "source_url": "https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/",
+      "method": "reddit_post_embed",
+      "reddit_post_id": "90bu6w",
+      "reddit_media_id": "gyh95hiqc0b11",
+      "reddit_kind": "post",
+      "bytes": 7478923,
+      "sha256": "5dcd184489f41800edfafd60dbab966226cbc262421cf92c8385f271aaf84e97",
+      "duration_sec": 13.7,
+      "has_video": true,
+      "has_audio": false,
+      "codecs": ["h264"],
+      "decode_ok": true,
+      "same_file_as_v0_5_0_direct_cdn": true
+    },
+    {
+      "source_url": "https://www.reddit.com/r/videos/comments/6rrwyj/that_small_heart_attack/",
+      "method": "reddit_post_embed",
+      "reddit_post_id": "6rrwyj",
+      "reddit_media_id": "zv89llsvexdz",
+      "reddit_kind": "post",
+      "bytes": 3733550,
+      "sha256": "3c3915deadbdd7b84b3213082bc3f82d5da1d9eced0353ecf37059e9a9cd636f",
+      "duration_sec": 11.797,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true
+    },
+    {
+      "source_url": "https://www.reddit.com/r/dumbfuckers_club/comments/zjjw82/cringe/",
+      "method": "reddit_post_embed",
+      "reddit_post_id": "zjjw82",
+      "reddit_media_id": "a1oneun6pa5a1",
+      "reddit_kind": "crosspost",
+      "bytes": 1867580,
+      "sha256": "8619de5e280252b9df8b512662d4e1a315494e36496f212b02a181375c44d543",
+      "duration_sec": 16.063,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true
+    }
+  ],
+  "failed": [
+    {
+      "source_url": "https://redd.it/90bu6w",
+      "error": "reddit short-link redirect blocked (HTTP 403); cannot invent a media id"
+    },
+    {
+      "source_url": "https://www.reddit.com/comments/90bu6w",
+      "error": "public embed did not include post 90bu6w; listing JSON was blocked; cannot invent a media id"
+    },
+    {
+      "source_url": "https://www.reddit.com/r/KamenRider/comments/wzqkxp/finale_kamen_rider_revice_episode_50_family_to/",
+      "error": "reddit post wzqkxp exposes 2 hosted videos (cpvjun0zyhk91, ln81tq2lyhk91); refusing to choose one"
+    },
+    {
+      "source_url": "https://www.reddit.com/r/aww/s/aaaaaaaa",
+      "error": "reddit share redirect blocked (HTTP 403); cannot invent a media id",
+      "note": "www is blocked here, so this did not distinguish a valid share code from an invalid one"
+    }
+  ]
+}

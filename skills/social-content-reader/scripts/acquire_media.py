@@ -5,8 +5,10 @@ Video platforms: success requires a local, ffprobe-validated file. Fresh
 Playwright contexts only. No browser profiles, saved cookies, private API
 clients, challenge solving, or decryption. Captions never become a media result.
 WeChat 公众号 (mp.weixin.qq.com): delegates to fetch_wechat_article.py; article
-body success does not require ffmpeg. See platforms/_video-body.md and
-platforms/wechat-article.md.
+body success does not require ffmpeg. Reddit post URLs resolve through the
+public `.json` listing, then `embed.reddit.com` when that listing is blocked,
+and download the post's own unsigned v.redd.it DASH manifest. See
+platforms/_video-body.md, platforms/wechat-article.md, and platforms/reddit.md.
 """
 from __future__ import annotations
 
@@ -139,10 +141,12 @@ def route(url):
         if not m:
             raise AcquireError("expected a public v.redd.it media id or DASHPlaylist.mpd URL")
         return "reddit", f"https://v.redd.it/{m[1]}/DASHPlaylist.mpd", m[1]
+    if host in {"redd.it", "www.redd.it"}:
+        return "reddit", url, ""
     for d, platform in [("linkedin.com", "linkedin"), ("twitch.tv", "twitch"),
                         ("xiaohongshu.com", "xiaohongshu"), ("xhslink.com", "xiaohongshu"),
-                        ("reddit.com", "reddit"), ("v.redd.it", "reddit"),
-                        ("douyin.com", "douyin")]:
+                        ("reddit.com", "reddit"), ("redditmedia.com", "reddit"),
+                        ("v.redd.it", "reddit"), ("douyin.com", "douyin")]:
         if domain(d):
             return platform, url, ""
     if domain("mp.weixin.qq.com"):
@@ -357,8 +361,19 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
             raise AcquireError("ffprobe and ffmpeg are required to verify acquired media")
         with tempfile.TemporaryDirectory(prefix=".acquire-", dir=out_dir) as temp:
             work = Path(temp)
+            reddit_meta = None
+            if platform == "reddit" and not ident:
+                from resolve_reddit import RedditResolveError, resolve_reddit_post
+                try:
+                    reddit_meta = resolve_reddit_post(player)
+                except RedditResolveError as exc:
+                    raise AcquireError(str(exc)) from exc
+                player = reddit_meta["dash_url"]
+                ident = reddit_meta["media_id"]
             if platform in ("youtube", "vimeo", "x") or (platform == "reddit" and ident):
                 path, method, expected = acquire_ytdlp(platform, player, work, max_mb * 1024**2)
+                if reddit_meta:
+                    method = "reddit_post_" + reddit_meta["via"]
             elif platform == "douyin":
                 from acquire_douyin import acquire as douyin_acquire
                 result = douyin_acquire(player, work)
@@ -375,6 +390,10 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
             shutil.move(str(path), target)
             result = {"ok": True, "platform": platform, "source_url": url, "method": method,
                       "path": str(target), "bytes": target.stat().st_size, "sha256": digest, **info}
+            if reddit_meta:
+                result["reddit_post_id"] = reddit_meta["post_id"]
+                result["reddit_media_id"] = reddit_meta["media_id"]
+                result["reddit_kind"] = reddit_meta.get("kind") or "post"
             (out_dir / (target.name + ".json")).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
             return result
     except Exception as exc:

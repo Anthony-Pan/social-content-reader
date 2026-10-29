@@ -11,7 +11,7 @@ PLATFORMS = SKILL / "platforms"
 class SkillContractTests(unittest.TestCase):
     def test_version_and_media_first_recipe(self):
         text = (SKILL / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn('version: "0.5.1"', text)
+        self.assertIn('version: "0.5.2"', text)
         self.assertIn("extract_frames.py", text)
         self.assertIn("ocr_frames.py", text)
         self.assertIn("asr_local.py", text)

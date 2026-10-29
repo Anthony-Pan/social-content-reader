@@ -16,8 +16,8 @@ SAMPLES = {
     'instagram': 'https://www.instagram.com/reel/Chunk8-jurw/',
     'tiktok': 'https://www.tiktok.com/@scout2015/video/6718335390845095173',
     'threads': 'https://www.threads.com/@nasa/post/DeMqtuYgkaL',
-    # The public CDN mapping is independently known. This is not a post resolver.
-    'reddit': 'https://v.redd.it/gyh95hiqc0b11',
+    # Post URL, not a pre-known CDN id. Direct v.redd.it URLs still work.
+    'reddit': 'https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/',
     'linkedin': 'https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7',
     'facebook': 'https://www.facebook.com/reel/1195289147628387',
     'telegram': 'https://t.me/telegram/402',
@@ -52,7 +52,10 @@ def main():
             result = {'ok': False, 'platform': name, 'source_url': SAMPLES[name],
                       'error': f'{type(exc).__name__}: no validated result'}
         if name == 'reddit':
-            result['limits'] = ['Known public CDN URL; post-to-media resolution is not tested by this sample']
+            result['limits'] = [
+                'Post URL; www/old listing JSON may be blocked and the public embed used instead',
+                'A saved file is not Understanding. redd.it short links stay blocked when that redirect is HTTP 403',
+            ]
         if name == 'wechat-article':
             result['limits'] = ['Embedded video probe only; no article-body success claimed']
         (folder/'attempt.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
