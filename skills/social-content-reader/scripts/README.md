@@ -179,8 +179,9 @@ Sources: [faster-whisper usage and decoding requirements](https://github.com/SYS
 ## Public video acquire (v0.5.0)
 
 `acquire_media.py URL --out-dir ~/Media/proof` tries a documented public player
-or yt-dlp route in a fresh context. Requires `ffmpeg`, `ffprobe`, `yt-dlp` for
-YouTube/X/Vimeo/direct Reddit CDN, and Playwright Chromium for browser routes. Install Playwright
+or yt-dlp route in a fresh context. Requires `ffmpeg`, `ffprobe`, and `yt-dlp` for
+YouTube, X, Vimeo, direct `v.redd.it` DASH, and Reddit post URLs (public `.json`
+or `embed.reddit.com`, then DASH). Playwright Chromium is for browser routes. Install Playwright
 in a venv (`python3 -m venv .venv-acquire; .venv-acquire/bin/pip install playwright;
 .venv-acquire/bin/playwright install chromium`). Use that venv Python to run the helper, or activate it before the `python3`
 examples. No browser profile or cookie file is read. The existing Douyin helper is routed through the same file validation.
@@ -208,8 +209,10 @@ Live sample replay (network and disk use; separate from unit tests):
 ```
 
 `PASS.json` / `FAIL.txt` describe the latest attempt; media receipts are immutable
-file evidence. Reddit's sample starts from an independently known public CDN
-URL and does not test arbitrary post resolution. 公众号's sample is an embedded
-video probe, not the article-body reader. This runner never produces Understanding.
+file evidence. Reddit's sample is the public post URL
+`/r/aww/comments/90bu6w/` (not a pre-known CDN id). Direct `v.redd.it` URLs
+still work. `redd.it` short links fail closed when that redirect is blocked.
+公众号's sample is an embedded video probe, not the article-body reader.
+This runner never produces Understanding.
 `--max-mb` limits accepted files; browser playback and HTTP transfers may fetch
 more data before an oversize response can be rejected.

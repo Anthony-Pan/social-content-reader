@@ -1,3 +1,26 @@
+# v0.5.2 hardening — Reddit post URL → media (box, 2026-10-29)
+
+- `resolve_reddit.py` reads a public post listing `.json` (first `t3` only).
+  When that response is an HTTP block page, it reads `embed.reddit.com` for
+  the same path. No cookie jar, no `over18` / gated opt-in, no private API,
+  no captcha solver, no IP rotation.
+- The player `src` or crosspost screenview `url` must belong to `t3_{id}`.
+  Other posts, posters, caption VTT, and oEmbed titles are not the file.
+  Signed HLS queries are discarded. The download URL is unsigned
+  `DASHPlaylist.mpd`, then yt-dlp `--ignore-config`. ffprobe must see a
+  positive duration and a video stream.
+- One gallery video is kept. Two hosted videos are refused. Quarantine /
+  private / gated JSON stops instead of trying the embed.
+- Live: `www` and `old` post pages and `.json` are still HTTP 403 Blocked.
+  Embed resolved `/r/aww/comments/90bu6w/` to `gyh95hiqc0b11` and saved the
+  same 7,478,923-byte file as the v0.5.0 direct CDN sample (`has_audio:
+  false`). `/r/videos/comments/6rrwyj/` and crosspost `zjjw82` saved files
+  with AAC. `redd.it/90bu6w`, bare `/comments/90bu6w`, and a two-video post
+  failed closed. See SMOKE_RESULTS v0.5.2 addendum.
+- Acquisition is not Understanding. A caption is still metadata.
+
+---
+
 # v0.5.1 hardening — WeChat 公众号 (box, 2026-10-26 Asia/Shanghai)
 
 - New `fetch_wechat_article.py`: stdlib-only HTTPS GET with a fixed Chrome

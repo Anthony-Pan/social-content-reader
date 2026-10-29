@@ -1,12 +1,14 @@
 # v0.5.0 acquisition matrix — Mac, 2026-10-26
 
-> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai) below.**
+> **Also see the [v0.5.1 公众号 addendum](#v051-addendum--wechat-公众号-harden-box-2026-10-26-asiashanghai) and the [v0.5.2 Reddit post-URL addendum](#v052-addendum--reddit-post-url--media-box-2026-10-29) below.** The table in this section is the v0.5.0 Mac matrix. Its Reddit row is the direct CDN sample. Post-URL behavior is the later addendum.
 
-**Fresh live results:** 13 saved video files across 15 video platforms; 小红书
-and 视频号 did not yield media. 公众号 is an article platform: its current
-article fetch hit verification and embedded video was not acquired. Reddit's
-pass starts with an independently known public CDN media id; its post resolver
-is still blocked. This is a partial all-platform goal, not 16 working fetches.
+**Fresh live results (v0.5.0 Mac):** 13 saved video files across 15 video
+platforms; 小红书 and 视频号 did not yield media. 公众号 is an article
+platform: its then-current article fetch hit verification and embedded video
+was not acquired. Reddit's v0.5.0 pass starts from a known public CDN id.
+**v0.5.2** (box) resolves sampled post URLs via the public embed when `www`
+listing JSON is HTTP 403; that does not make every Reddit URL work. This
+remains a partial all-platform goal, not 16 working fetches.
 
 Proof root: `~/Developer/scr-proof/matrix-2026-10-26/` (including exploratory
 artifacts). `matrix.json` and each platform's `PASS.json` or `FAIL.txt` identify
@@ -30,7 +32,7 @@ No ASR/Understanding was claimed in this acquisition matrix.
 | instagram | [](https://www.instagram.com/reel/Chunk8-jurw/); public_page_media | `instagram/instagram_7a956bbb30f3fa04.mp4` | 918120 | 4.966667 | no | Source reports has_audio=false; visual evidence only. |
 | tiktok | [6718335390845095173](https://www.tiktok.com/@scout2015/video/6718335390845095173); public_page_media | `tiktok/tiktok_d2899f4428fa4c46.mp4` | 2953029 | 10.495011 | yes | Old yt-dlp IP wall bypass not attempted; official player worked. Alternate 7206382937372134662 unavailable. |
 | threads | [DeMqtuYgkaL](https://www.threads.com/@nasa/post/DeMqtuYgkaL); public_page_media | `threads/threads_8f063507f698a30d.mp4` | 11169291 | 89.470708 | yes | Public sample only; gated/deleted URLs can still fail. |
-| reddit | [gyh95hiqc0b11](https://v.redd.it/gyh95hiqc0b11); yt_dlp | `reddit/reddit_5dcd184489f41800.mp4` | 7478923 | 13.7 | no | Known CDN URL only. Post/JSON and redditmedia embed blocked; no automatic arbitrary post resolution. |
+| reddit | [gyh95hiqc0b11](https://v.redd.it/gyh95hiqc0b11); yt_dlp | `reddit/reddit_5dcd184489f41800.mp4` | 7478923 | 13.7 | no | v0.5.0 Mac used a known CDN id (post page blocked). v0.5.2 resolves the post URL when `embed.reddit.com` is public; `www` JSON can still be HTTP 403. See addendum. |
 | linkedin | [the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7](https://www.linkedin.com/posts/the-mathworks_2_what-is-mathworks-cloud-center-activity-7151241570371948544-4Gu7); public_page_media | `linkedin/linkedin_496e0813b1cc2178.mp4` | 5316468 | 161.866009 | yes | Public sample only; gated/deleted URLs can still fail. |
 | facebook | [1195289147628387](https://www.facebook.com/reel/1195289147628387); public_page_media | `facebook/facebook_cc12fd22535bfa0d.mp4` | 622802 | 9.566667 | no | Target DASH manifest has video representations only; visual evidence only. |
 | telegram | [402](https://t.me/telegram/402); public_page_media | `telegram/telegram_2604a7144d849a8e.mp4` | 1408169 | 8.0 | yes | Public sample only; gated/deleted URLs can still fail. |
@@ -83,11 +85,13 @@ No ASR/Understanding was claimed in this acquisition matrix.
   and [WechatVideoDL](https://github.com/topgptus/WechatVideoDL) were researched,
   not executed: their Yuanbao/cookie clients are outside a documented public
   player route. Interception/private API replay/CDN decryption are excluded.
-- Reddit: post URL, JSON via yt-dlp, and redditmedia embed were blocked. The
-  media id `gyh95hiqc0b11` is mapped to post `90bu6w` by the
+- Reddit (v0.5.0 Mac): post URL, JSON via yt-dlp, and redditmedia embed were
+  blocked. The media id `gyh95hiqc0b11` is mapped to post `90bu6w` by the
   [public yt-dlp test fixture](https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/extractor/reddit.py).
-  Its public DASH manifest saved a video-only file. This separate CDN pass
-  must never be advertised as a working arbitrary post resolver.
+  Its public DASH manifest saved a video-only file. That CDN pass alone was
+  not a post resolver. **v0.5.2** resolves the post URL on a network where
+  `embed.reddit.com` is reachable; see the addendum. `www` listing JSON can
+  still be HTTP 403.
 - 公众号: current curl of /s/Rsa54LdbyhXIHheJYO6gkw returned `环境异常 /
   当前环境异常，完成验证后即可继续访问`, not `#js_content`. A host web open also
   failed. Historical body-reading results below remain historical.
@@ -294,4 +298,39 @@ Proof: `/workspace/scr-proof/wechat-gzh-2026-10-26/`.
 Hard rules unchanged: no captcha defeat, IP rotation, stolen cookies, private
 APIs, or CDN decrypt. Captions remain metadata; Understanding needs a real
 media file for video.
+
+---
+
+# v0.5.2 addendum — Reddit post URL → media (box, 2026-10-29)
+
+Helper: `skills/social-content-reader/scripts/resolve_reddit.py`, called from
+`acquire_media.py` for a Reddit post URL (no media id yet). Fixed browser
+User-Agent, no cookie jar. `www.reddit.com` and `old.reddit.com` post HTML and
+`.json` were **HTTP 403 Blocked**. `embed.reddit.com` for the same path
+returned the post's `shreddit-player` or, for a crosspost, that post's
+screenview `v.redd.it` URL. Signed player queries were dropped. yt-dlp
+downloaded unsigned `DASHPlaylist.mpd` with `--ignore-config`. ffprobe required
+a positive duration and a video stream. `ffmpeg -f null` decode exit 0 on each
+saved file. Media files were not committed.
+
+Receipts: [`reddit-post-2026-10-29.json`](skills/social-content-reader/references/reddit-post-2026-10-29.json).
+
+| Sample | Result | Notes |
+| --- | --- | --- |
+| [/r/aww/comments/90bu6w/](https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/) | **FILE OK** | `reddit_post_embed` → `gyh95hiqc0b11`. 7,478,923 bytes, 13.7s, h264, `has_audio: false`. SHA-256 `5dcd184489f41800edfafd60dbab966226cbc262421cf92c8385f271aaf84e97`, the same file as the v0.5.0 direct CDN sample. |
+| [/r/videos/comments/6rrwyj/](https://www.reddit.com/r/videos/comments/6rrwyj/that_small_heart_attack/) | **FILE OK** | `zv89llsvexdz`. 3,733,550 bytes, 11.797s, h264+aac, `has_audio: true`. |
+| [/r/dumbfuckers_club/comments/zjjw82/](https://www.reddit.com/r/dumbfuckers_club/comments/zjjw82/cringe/) | **FILE OK** (crosspost) | `a1oneun6pa5a1`, `reddit_kind: crosspost`. 1,867,580 bytes, 16.063s, h264+aac. |
+| [/r/KamenRider/comments/wzqkxp/](https://www.reddit.com/r/KamenRider/comments/wzqkxp/finale_kamen_rider_revice_episode_50_family_to/) | **FAIL** | Two inline hosted videos; refused to choose one. No file. |
+| [redd.it/90bu6w](https://redd.it/90bu6w) | **FAIL** | Short-link redirect HTTP 403. Media id not invented. |
+| [/comments/90bu6w](https://www.reddit.com/comments/90bu6w) | **FAIL** | Listing JSON blocked and the embed shell did not include the post. |
+| `www` `/r/aww/s/…` | **FAIL** | Share redirect HTTP 403 on this box. A redirect that reaches a comments URL is covered by a unit test, not by this live code. |
+
+Gallery JSON (one video beside an image; two videos refused) is an offline
+fixture. This box never received listing JSON, so a gallery page was not saved
+as its own sample. Quarantine / private / gated reasons stop without an opt-in
+cookie. oEmbed on a full post URL returned title and author only; that was not
+used as the file or as `body_text`.
+
+This does not mean every Reddit URL works, and it is not Understanding.
+
 

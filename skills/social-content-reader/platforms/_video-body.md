@@ -97,7 +97,7 @@ accessible.** Verified sample files, byte counts and hashes are in
 | [Instagram](instagram.md) | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
 | [TikTok](tiktok.md) | Documented /player/v1/{id} → video src | Yes; audio + video |
 | [Threads](threads.md) | Public page JSON → matching code → video_versions | Yes; audio + video |
-| [Reddit](reddit.md) | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL blocked |
+| [Reddit](reddit.md) | Post URL → public JSON or embed → that post's v.redd.it DASH → yt-dlp | Yes when the public embed (or listing JSON) includes that post's media. Direct CDN still works. www/old JSON and redd.it can be blocked. |
 | [LinkedIn](linkedin.md) | Public video data-sources → progressive MP4 | Yes; audio + video |
 | [Facebook Reels](facebook.md) | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | [Telegram](telegram.md) | Public message widget → scoped video src | Yes; audio + video |

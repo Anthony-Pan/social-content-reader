@@ -22,7 +22,7 @@ compatibility: >
   heavy jobs; Mac and Linux fully support Codex skill load, fetch, and ASR.
 metadata:
   author: Anthony-Pan
-  version: "0.5.1"
+  version: "0.5.2"
   runtime: "Windows 24/7 OK for heavy jobs; Mac/Linux fully supported for Codex skill load + fetch + ffmpeg frames + ASR"
 ---
 
@@ -157,7 +157,7 @@ or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](../../SMOKE_R
 | Instagram | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
 | TikTok | Documented /player/v1/{id} → video src | Yes; audio + video |
 | Threads | Public page JSON → matching code → video_versions | Yes; audio + video |
-| Reddit | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL resolution blocked |
+| Reddit | Post URL → public JSON or embed → that post's v.redd.it DASH → yt-dlp | Yes for a post URL whose embed is public. Direct CDN still works. www/old `.json` and redd.it can be HTTP 403. Video-only when the manifest has no audio. |
 | LinkedIn | Public video data-sources → progressive MP4 | Yes; audio + video |
 | Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | Telegram | Public message widget → scoped video src | Yes; audio + video |

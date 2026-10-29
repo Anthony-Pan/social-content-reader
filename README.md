@@ -2,12 +2,12 @@
 
 **Public Agent Skill** that teaches AI agents how to **read a video**: the picture, burned-in text, graphics, and speech. A share caption is optional metadata. It is not the body.
 
-Version **0.5.1** hardens WeChat 公众号 article acquire (Chrome UA HTTPS →
-substantive `#js_content`; mpvideo embeds listed; embed media best-effort).
-v0.5.0 added automatic acquisition through public players and validated local
-files (13 video platforms). LinkedIn, 小红书, Telegram and Twitch remain listed
-with their actual success or wall. 视频号 still has no public media URL.
-Captions remain metadata.
+Version **0.5.2** resolves a Reddit post URL to that post's hosted
+v.redd.it media (public `.json` listing, then `embed.reddit.com` when the
+listing is blocked) and validates the DASH file. It does not claim
+Understanding or universal access. v0.5.1 hardens WeChat 公众号 article
+acquire. v0.5.0 saved 13 video-platform sample files. 小红书 and 视频号 remain
+blocked on public paths. Captions remain metadata.
 
 Most social sites block or frustrate agents. The recipe: detect the platform → acquire a local media file (or the written article/post) → read frames, on-screen text, and speech → normalize → summarize what was actually seen and heard.
 
@@ -73,7 +73,7 @@ or a completed Understanding. Current evidence: [SMOKE_RESULTS.md](SMOKE_RESULTS
 | Instagram | Public page JSON → matching code → video_versions | Yes; video, source has_audio=false |
 | TikTok | Documented /player/v1/{id} → video src | Yes; audio + video |
 | Threads | Public page JSON → matching code → video_versions | Yes; audio + video |
-| Reddit | Public v.redd.it DASH manifest → yt-dlp | Yes; video only; post URL resolution blocked |
+| Reddit | Post URL → public JSON or embed → v.redd.it DASH → yt-dlp | Yes for sampled post URLs whose embed is public; www/old JSON and redd.it can be HTTP 403 |
 | LinkedIn | Public video data-sources → progressive MP4 | Yes; audio + video |
 | Facebook Reels | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | Telegram | Public message widget → scoped video src | Yes; audio + video |
