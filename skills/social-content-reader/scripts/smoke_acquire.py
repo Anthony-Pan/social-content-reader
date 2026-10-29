@@ -22,6 +22,7 @@ SAMPLES = {
     'facebook': 'https://www.facebook.com/reel/1195289147628387',
     'telegram': 'https://t.me/telegram/402',
     'vimeo': 'https://vimeo.com/22439234',
+    # Clip only. A VOD longer than 600s needs --section and is not part of --all.
     'twitch': 'https://clips.twitch.tv/FaintLightGullWholeWheat',
     'douyin': 'https://www.douyin.com/video/7696098282904259850',
     'bilibili': 'https://www.bilibili.com/video/BV17x411w7KC',
@@ -55,6 +56,10 @@ def main():
             result['limits'] = [
                 'Post URL; www/old listing JSON may be blocked and the public embed used instead',
                 'A saved file is not Understanding. redd.it short links stay blocked when that redirect is HTTP 403',
+            ]
+        if name == 'twitch':
+            result['limits'] = [
+                'Clip sample only. A VOD longer than 600s needs --section and is not part of --all',
             ]
         if name == 'wechat-article':
             result['limits'] = ['Embedded video probe only; no article-body success claimed']

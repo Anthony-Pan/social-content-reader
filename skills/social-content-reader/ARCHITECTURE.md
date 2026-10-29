@@ -50,7 +50,7 @@ Written posts and articles (Reddit selftext, 公众号, X text, and similar) sti
 | `facebook.com`, `fb.watch` | `facebook` |
 | `t.me/{channel}/{id}`, `t.me/s/{channel}/{id}` | `telegram` |
 | `vimeo.com/{id}`, `player.vimeo.com/video/{id}` | `vimeo` |
-| `twitch.tv/videos/*`, `clips.twitch.tv/*` | `twitch` |
+| `twitch.tv/videos/{id}`, `clips.twitch.tv/{slug}` (channel/live pages are not one file) | `twitch` |
 
 ### Chinese
 

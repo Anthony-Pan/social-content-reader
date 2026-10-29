@@ -102,7 +102,7 @@ accessible.** Verified sample files, byte counts and hashes are in
 | [Facebook Reels](facebook.md) | Public page JSON → exact video id → browser_native URL | Yes; video only |
 | [Telegram](telegram.md) | Public message widget → scoped video src | Yes; audio + video |
 | [Vimeo](vimeo.md) | Public player.vimeo.com URL → yt-dlp | Yes; audio + video |
-| [Twitch](twitch.md) | Public clip player video src → MP4 | Yes; audio + video |
+| [Twitch](twitch.md) | Public yt-dlp clip, or VOD/section ≤ 600s | Yes when the clip, short VOD, or `--section` fits `--max-mb`. Longer VODs are refused, not silently trimmed. |
 | [Douyin 抖音](douyin.md) | Mobile share player → playwm → MP4 | Yes; audio + video |
 | [Bilibili 哔哩哔哩](bilibili.md) | External player → observed full-range video/audio → mux | Yes; AV1 + AAC |
 | [小红书 / Xiaohongshu](xiaohongshu.md) | Public note page → playing video src (attempted) | NO; risk wall |

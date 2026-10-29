@@ -25,6 +25,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from acquire_twitch import TwitchError, acquire_public, classify_twitch
+
 
 class AcquireError(Exception):
     pass
@@ -143,7 +145,13 @@ def route(url):
         return "reddit", f"https://v.redd.it/{m[1]}/DASHPlaylist.mpd", m[1]
     if host in {"redd.it", "www.redd.it"}:
         return "reddit", url, ""
-    for d, platform in [("linkedin.com", "linkedin"), ("twitch.tv", "twitch"),
+    if domain("twitch.tv"):
+        try:
+            info = classify_twitch(url)
+        except TwitchError as exc:
+            raise AcquireError(str(exc)) from exc
+        return "twitch", info["canonical_url"], info["ident"]
+    for d, platform in [("linkedin.com", "linkedin"),
                         ("xiaohongshu.com", "xiaohongshu"), ("xhslink.com", "xiaohongshu"),
                         ("reddit.com", "reddit"), ("redditmedia.com", "reddit"),
                         ("v.redd.it", "reddit"), ("douyin.com", "douyin")]:
@@ -310,7 +318,7 @@ def acquire_ytdlp(platform, url, work, max_bytes):
     return files[0], "yt_dlp_syndication" if platform == "x" else "yt_dlp", None
 
 
-def acquire(url, out_dir, max_mb=128, wait_seconds=8):
+def acquire(url, out_dir, max_mb=128, wait_seconds=8, section=None):
     platform = None
     try:
         platform, player, ident = route(url)
@@ -359,9 +367,12 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
             return payload
         if not shutil.which("ffprobe") or not shutil.which("ffmpeg"):
             raise AcquireError("ffprobe and ffmpeg are required to verify acquired media")
+        if section and platform != "twitch":
+            raise AcquireError("--section is only supported for a Twitch clip or VOD URL")
         with tempfile.TemporaryDirectory(prefix=".acquire-", dir=out_dir) as temp:
             work = Path(temp)
             reddit_meta = None
+            twitch_meta = None
             if platform == "reddit" and not ident:
                 from resolve_reddit import RedditResolveError, resolve_reddit_post
                 try:
@@ -380,6 +391,12 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
                 if not result.get("ok"):
                     raise AcquireError(result.get("error", "Douyin acquire failed"))
                 path, method, expected = Path(result["path"]), "douyin_mobile_player", None
+            elif platform == "twitch":
+                try:
+                    path, method, expected, twitch_meta = acquire_public(
+                        url, work, max_mb * 1024**2, section)
+                except TwitchError as exc:
+                    raise AcquireError(str(exc)) from exc
             else:
                 path, method, expected = acquire_browser(platform, player, ident, work, max_mb * 1024**2, wait_seconds)
             info = probe(path, expected_duration=expected)
@@ -394,11 +411,17 @@ def acquire(url, out_dir, max_mb=128, wait_seconds=8):
                 result["reddit_post_id"] = reddit_meta["post_id"]
                 result["reddit_media_id"] = reddit_meta["media_id"]
                 result["reddit_kind"] = reddit_meta.get("kind") or "post"
+            if twitch_meta:
+                result.update(twitch_meta)
             (out_dir / (target.name + ".json")).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
             return result
     except Exception as exc:
         # Browser exception messages may include ephemeral signed media URLs.
         message = str(exc) if isinstance(exc, AcquireError) else f"{type(exc).__name__}: acquire failed; no validated file"
+        if platform is None:
+            host = (urlparse(url).hostname or "").lower()
+            if host == "twitch.tv" or host.endswith(".twitch.tv"):
+                platform = "twitch"
         return {"ok": False, "platform": platform, "source_url": url, "error": message,
                 "body_kind": "unavailable", "fetch_method": "acquire_failed"}
 
@@ -409,10 +432,14 @@ def main():
     parser.add_argument("--out-dir", type=Path, default=Path("."))
     parser.add_argument("--max-mb", type=int, default=128)
     parser.add_argument("--wait-seconds", type=int, default=8)
+    parser.add_argument(
+        "--section", default=None,
+        help="Twitch only. START-END (seconds, MM:SS, H:MM:SS, or 1h2m3s). At most 600s. Not a silent prefix.",
+    )
     args = parser.parse_args()
     if args.max_mb <= 0 or not 1 <= args.wait_seconds <= 60:
         parser.error("--max-mb must be positive; --wait-seconds must be 1..60")
-    result = acquire(args.url, args.out_dir, args.max_mb, args.wait_seconds)
+    result = acquire(args.url, args.out_dir, args.max_mb, args.wait_seconds, args.section)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result["ok"] else 1
 

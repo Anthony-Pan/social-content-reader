@@ -1,0 +1,137 @@
+{
+  "version": "0.5.3",
+  "when": "2026-10-29",
+  "where": "box",
+  "yt_dlp": "2026.10.26",
+  "ffmpeg": "6.1.1",
+  "notes": [
+    "yt-dlp --ignore-config, no cookies, no netrc, no Helix token.",
+    "Full public acquire and one --section are each limited to 600 seconds.",
+    "A longer VOD is refused. It is not silently trimmed to a prefix.",
+    "?t= is a player bookmark and is not applied.",
+    "Padded size estimate runs before download (about 220KB/s at 480p, 900KB/s at 1080p). Over --max-mb refuses before download.",
+    "ffprobe required a positive duration and a video stream. ffmpeg -f null decode exit 0.",
+    "Signed CDN URLs were not stored.",
+    "These files are acquisition evidence, not Understanding."
+  ],
+  "passed": [
+    {
+      "source_url": "https://clips.twitch.tv/FaintLightGullWholeWheat",
+      "method": "twitch_ytdlp_public",
+      "twitch_kind": "clip",
+      "twitch_id": "FaintLightGullWholeWheat",
+      "twitch_full": true,
+      "twitch_height": 1080,
+      "twitch_source_duration_sec": 32,
+      "bytes": 16299328,
+      "sha256": "9d3021eae0ac932a520b5ebedf995ec14901d882d97b27eeccbbb5b9440a4317",
+      "duration_sec": 32.099,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true,
+      "same_file_as_v0_5_0_public_player": true
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2128758214",
+      "method": "twitch_ytdlp_public",
+      "twitch_kind": "vod",
+      "twitch_id": "2128758214",
+      "twitch_full": true,
+      "twitch_height": 1080,
+      "twitch_source_duration_sec": 402,
+      "max_mb": 400,
+      "bytes": 256357852,
+      "sha256": "d19f055ec188ed14084ddd48f38856eaaa52a760ad224879aee0ea45f5aed870",
+      "duration_sec": 401.932,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["aac", "h264"],
+      "decode_ok": true,
+      "note": "Source 1080p only. Default --max-mb 128 refused before download (estimate 361800000 bytes)."
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2128758214",
+      "method": "twitch_ytdlp_public",
+      "twitch_kind": "vod",
+      "twitch_id": "2128758214",
+      "section_start_sec": 10,
+      "section_end_sec": 25,
+      "twitch_full": false,
+      "twitch_height": 1080,
+      "twitch_source_duration_sec": 402,
+      "bytes": 11068048,
+      "sha256": "87d27f42000a99103e1fa4c55b82a5a5f4f111fa53c19d8c2810be4ebbc4164c",
+      "duration_sec": 15.134,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2096474672",
+      "method": "twitch_ytdlp_public",
+      "twitch_kind": "vod",
+      "twitch_id": "2096474672",
+      "section_start_sec": 0,
+      "section_end_sec": 20,
+      "twitch_full": false,
+      "twitch_height": 480,
+      "twitch_source_duration_sec": 15434,
+      "bytes": 3407834,
+      "sha256": "48c6b55578507ca843a3aa79a3fc95d0c2df0173c573045980fec6e3084c8723",
+      "duration_sec": 20.025333,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2096474672",
+      "method": "twitch_ytdlp_public",
+      "twitch_kind": "vod",
+      "twitch_id": "2096474672",
+      "section_start_sec": 3600,
+      "section_end_sec": 3620,
+      "twitch_full": false,
+      "twitch_height": 480,
+      "twitch_source_duration_sec": 15434,
+      "bytes": 3557056,
+      "sha256": "dccf952bec3190f97c868a8b2d88250a5daa167a12477381ad6e5d2d671fd156",
+      "duration_sec": 20.01873,
+      "has_video": true,
+      "has_audio": true,
+      "codecs": ["h264", "aac"],
+      "decode_ok": true,
+      "note": "Window at 1:00:00, not the start of the VOD."
+    }
+  ],
+  "failed": [
+    {
+      "source_url": "https://www.twitch.tv/videos/2096474672",
+      "error": "Twitch VOD is 15434s (4:17:14). Full public acquire is limited to 600s. Refusing to trim it silently."
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2096474672?t=1h2m3s",
+      "error": "Bookmark t=3723s ignored. Not a download range. VOD still over 600s."
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2096474672",
+      "section": "0-601",
+      "error": "Twitch --section is 601s. The public limit is 600s. Nothing was downloaded."
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/2128758214",
+      "max_mb": 128,
+      "error": "Twitch VOD window 402s at 1080p is estimated 361800000 bytes, over the 134217728-byte cap. Refused before download."
+    },
+    {
+      "source_url": "https://www.twitch.tv/videos/1",
+      "error": "Twitch media does not exist or is unavailable"
+    },
+    {
+      "source_url": "https://www.twitch.tv/twitch",
+      "error": "Channel and live URLs are not a clip or VOD. Live streams are not recorded."
+    }
+  ]
+}
