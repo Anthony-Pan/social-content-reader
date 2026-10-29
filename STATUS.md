@@ -29,8 +29,15 @@ not a claim of unrestricted access. Understanding is claimed only when
   was read.
 - Offline tests cover URL refusal, undecodable files, engine none, caption
   rejection, silent video, audio-only, official tracks, and frame reuse.
-  A generated lavfi file on this box is the smoke in SMOKE_RESULTS. The
-  v0.5.0 platform samples were not on this disk, so they were not re-read.
+  Box smoke remains the lavfi sample in SMOKE_RESULTS (ASR `none` there).
+  **Mac 2026-10-29 Asia/Shanghai:** three v0.5.0 matrix files (YouTube
+  `jNQXAC9IVRw`, Douyin `7696098282904259850`, Twitch clip
+  `FaintLightGullWholeWheat`) were re-read with local `faster-whisper`
+  (`asr_engine: faster-whisper`, model `base`) and macOS Vision OCR. After
+  host vision notes on extracted frames, each pass-2 JSON has `ok: true`,
+  `complete: true`, `blocked: false`, `body_kind: media_understanding`.
+  See SMOKE_RESULTS Mac Understanding addendum. Media files stay on the Mac
+  proof disk; they are not committed.
 
 ## Shipped (0.5.3)
 
@@ -72,6 +79,9 @@ not a claim of unrestricted access. Understanding is claimed only when
 - 公众号 harden: `/workspace/scr-proof/wechat-gzh-2026-10-26/` (box)
 - Reddit post URLs: [references/reddit-post-2026-10-29.json](skills/social-content-reader/references/reddit-post-2026-10-29.json)
 - Twitch clip / VOD sections: [references/twitch-vod-2026-10-29.json](skills/social-content-reader/references/twitch-vod-2026-10-29.json)
+- Mac Understanding (YouTube / Douyin / Twitch): proof
+  `~/Developer/scr-proof/understand-2026-10-29/` + SMOKE_RESULTS Mac
+  addendum; box mirror `/workspace/scr-understand-proof/`
 - Unit suite: `python3 -m unittest discover -s skills/social-content-reader/scripts/tests`
 
 ## Remaining work
@@ -86,10 +96,14 @@ not a claim of unrestricted access. Understanding is claimed only when
   at most 600s can be, when it fits `--max-mb`. Subscriber-only media was
   not given a live sample; login/subscription errors stop with no cookie
   fallback. `?t=` does not seek.
-- Understanding engines: this box has ffmpeg and tesseract. It does not have
-  faster-whisper or openai-whisper, so speech stays `asr_engine: none`.
-  No vision model is bundled; a human or host tool has to look at the frames
-  and pass notes. The 13 acquired platform files were not on this box.
+- Understanding engines: the **box** still has ffmpeg + tesseract and no
+  Whisper package (lavfi smoke keeps `asr_engine: none`). The **Mac** proof
+  venv `~/Developer/scr-proof/.venv-asr` has `faster-whisper==1.2.1` and used
+  Vision OCR (tesseract not installed there). Host vision notes remain
+  required for picture prose. Three matrix samples were re-read on that Mac
+  (YouTube / Douyin / Twitch); the other acquired files were not part of this
+  pass. Douyin local ASR text is low quality vs on-screen lyrics — reported
+  honestly, not corrected. 小红书 / 视频号 still have no media file to understand.
 
 ## Locations
 
